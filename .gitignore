@@ -18,3 +18,4 @@ doc
 *.mapgr
 *.path
 *.tgz
+Maps/*
