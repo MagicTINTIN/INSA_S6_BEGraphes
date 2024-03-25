@@ -1,1 +1,50 @@
-classAlias "multiplicityRole1" o--> "multiplicityRole2" typeAlias : label <<stereotype>> >
+@startuml
+
+class Graph {
+    - const String mapId
+    - const String mapName
+    - const Node nodes[]
+    - const GraphStatistics graphStatistics
+}
+
+class Node {
+    - const int id
+    - const Point point
+    - const Arc successors[]
+}
+
+class Path {
+    - const Graph graph
+    - const Node origin
+    - const Arc arcs[]
+}
+
+abstract class Arc {
+    +{abstract} Node getOrigin()
+    +{abstract} Node getDestination()
+    +{abstract} float getLength()
+    + double getTravelTime(double speed)
+    + double getMinimumTravelTime()
+    +{abstract} RoadInformation getRoadInformation()
+    +{abstract} Point[] getPoints()
+}
+
+class RoadInformation {
+    - const RoadType type
+    - const  AccessRestrictions access
+    - const boolean oneway
+    - const int maxSpeed
+    - const String name
+}
+
+RoadInformation  <|-- Arc
+Node <|-- Arc
+Graph *-- Node
+Node *-- Arc
+Path *-- Graph
+Path *-- Node
+Path *-- Arc
+
+
+
+@enduml
