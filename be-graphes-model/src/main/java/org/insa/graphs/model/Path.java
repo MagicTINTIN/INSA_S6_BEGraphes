@@ -204,8 +204,20 @@ public class Path {
      * @deprecated Need to be implemented.
      */
     public boolean isValid() {
-        // TODO:
-        return false;
+        if (isEmpty() || size() == 1)
+            return true;
+        
+        if (getOrigin() != arcs.get(0).getOrigin())
+            return false;
+
+        Node lastDestination = null;
+        for (Arc arc : arcs) {
+            if (arc.getOrigin() != lastDestination && lastDestination != null)
+                return false;     
+            lastDestination = arc.getDestination();
+        }
+        
+        return true;
     }
 
     /**
