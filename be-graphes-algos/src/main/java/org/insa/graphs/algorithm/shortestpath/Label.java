@@ -6,26 +6,34 @@ import org.insa.graphs.model.Node;
 public class Label implements Comparable<Label> {
     private Node currentVertex;
     private boolean marked;
-    private double realisedCost;
-    private Node parent;
+    private float realisedCost;
+    private Arc parent;
+    private int ID;
 
-    public Label(Node cVertex, boolean m, double cost, Node par)
+    public Label(Node cVertex, boolean m, float cost, Arc par)
     {
         this.currentVertex = cVertex;
         this.marked = m;
         this.realisedCost = cost;
         this.parent = par;
+        this.ID = cVertex.getId();
     }
 
     public Label(Node defaultVertex)
     {
         this.currentVertex = defaultVertex;
         this.marked = false;
-        this.realisedCost = Double.MAX_VALUE;
+        this.realisedCost = Float.MAX_VALUE;
         this.parent = null;
+        this.ID = defaultVertex.getId();
     }
 
-    public double getCost()
+    public int getID()
+    {
+        return this.ID;
+    }
+
+    public float getCost()
     {
         return this.realisedCost;
     }
@@ -36,7 +44,7 @@ public class Label implements Comparable<Label> {
      * @param parent
      * @return returns 0 if updated, 1 if cost not updated (new is >), 2 if already marked
      */
-    public int updateCostAndParent(double newCost, Node newParent)
+    public int updateCostAndParent(float newCost, Arc newParent)
     {
         if (marked)
             return 2;
@@ -47,7 +55,7 @@ public class Label implements Comparable<Label> {
         return 0;
     }
 
-    public void setCost(double newCost)
+    public void setCost(float newCost)
     {
         this.realisedCost = newCost;
     }
@@ -67,7 +75,7 @@ public class Label implements Comparable<Label> {
         this.marked = false;
     }
 
-    public Node getParent()
+    public Arc getParent()
     {
         return this.parent;
     }
@@ -80,6 +88,6 @@ public class Label implements Comparable<Label> {
 
     @Override
     public int compareTo(Label o) {
-        return Double.compare(this.realisedCost, o.realisedCost);
+        return Float.compare(this.realisedCost, o.realisedCost);
     }
 }
