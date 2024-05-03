@@ -6,17 +6,19 @@ import org.insa.graphs.model.Node;
 public class Label implements Comparable<Label> {
     private Node currentVertex;
     private boolean marked;
+    private boolean reached;
     private float realisedCost;
     private Arc parent;
     private int ID;
 
-    public Label(Node cVertex, boolean m, float cost, Arc par)
+    public Label(Node cVertex, boolean m, boolean r, float cost, Arc par)
     {
         this.currentVertex = cVertex;
         this.marked = m;
         this.realisedCost = cost;
         this.parent = par;
         this.ID = cVertex.getId();
+        this.reached = r;
     }
 
     public Label(Node defaultVertex)
@@ -26,6 +28,7 @@ public class Label implements Comparable<Label> {
         this.realisedCost = Float.MAX_VALUE;
         this.parent = null;
         this.ID = defaultVertex.getId();
+        this.reached = false;
     }
 
     public int getID()
@@ -38,6 +41,11 @@ public class Label implements Comparable<Label> {
         return this.realisedCost;
     }
 
+    public boolean hasBeenReached()
+    {
+        return this.reached;
+    }
+
     /**
      * 
      * @param newCost
@@ -46,6 +54,7 @@ public class Label implements Comparable<Label> {
      */
     public int updateCostAndParent(float newCost, Arc newParent)
     {
+        this.reached = true;
         if (marked)
             return 2;
         if (newCost > this.realisedCost)
@@ -57,6 +66,7 @@ public class Label implements Comparable<Label> {
 
     public void setCost(float newCost)
     {
+        this.reached = true;
         this.realisedCost = newCost;
     }
 
