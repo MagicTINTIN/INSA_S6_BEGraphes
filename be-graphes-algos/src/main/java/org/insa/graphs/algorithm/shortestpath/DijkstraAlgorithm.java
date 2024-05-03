@@ -52,6 +52,11 @@ public class DijkstraAlgorithm extends ShortestPathAlgorithm {
 
             for (Arc arc : minNode.getSuccessors()) {
                 Node successor = arc.getDestination();
+                
+                if (!data.isAllowed(arc)) {
+                    continue;
+                }
+                
                 Label successorLabel = nodeLabels[successor.getId()];
 
                 if (!successorLabel.isMarked()) {
@@ -61,7 +66,7 @@ public class DijkstraAlgorithm extends ShortestPathAlgorithm {
                     else
                         notifyNodeReached(successor);
 
-                    int res = successorLabel.updateCostAndParent(minVertex.getCost() + arc.getLength(),
+                    int res = successorLabel.updateCostAndParent(minVertex.getCost() + (float) data.getCost(arc),
                             arc);
                     // System.out.println("Updating vertex cost: " + res + ", accessing " + successor.getId()
                     //         + " out of " + nbNodes);
@@ -77,9 +82,14 @@ public class DijkstraAlgorithm extends ShortestPathAlgorithm {
             }
         }
 
+        if (!isDestinationMarked) {
+            solution = new ShortestPathSolution(data, Status.INFEASIBLE);;
+            return solution;
+        }
+
         ArrayList<Arc> shortestArcs = new ArrayList<>();
         Label goingBack = nodeLabels[destinationID];
-        System.out.println("Finished, going back");
+        // System.out.println("Finished, going back");
         while (goingBack.getParent() != null) {
             shortestArcs.add(goingBack.getParent());
             goingBack = nodeLabels[goingBack.getParent().getOrigin().getId()];
