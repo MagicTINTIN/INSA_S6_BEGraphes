@@ -51,11 +51,11 @@ public class DijkstraAlgorithmTest {
         final String pathName = "/mnt/commetud/3eme Annee MIC/Graphes-et-Algorithmes/Paths/path_fr31insa_rangueil_r2.path";
 
         // Create a graph reader.
-        final GraphReader reader = new BinaryGraphReader(
+        final GraphReader insaGraph = new BinaryGraphReader(
                 new DataInputStream(new BufferedInputStream(new FileInputStream(mapName))));
 
-        // TODO: Read the graph.
-        final Graph graph = null;
+        final Graph graph = insaGraph.read();
+        insaGraph.close();
 
         // Create the drawing:
         final Drawing drawing = createDrawing();

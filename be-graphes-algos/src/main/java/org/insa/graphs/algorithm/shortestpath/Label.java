@@ -7,7 +7,7 @@ public class Label implements Comparable<Label> {
     private Node currentVertex;
     private boolean marked;
     private boolean reached;
-    private float realisedCost;
+    protected float realisedCost;
     private Arc parent;
     private int ID;
 
@@ -46,6 +46,11 @@ public class Label implements Comparable<Label> {
         return this.reached;
     }
 
+    public void reach()
+    {
+        this.reached = true;
+    }
+
     /**
      * 
      * @param newCost
@@ -68,6 +73,18 @@ public class Label implements Comparable<Label> {
     {
         this.reached = true;
         this.realisedCost = newCost;
+    }
+
+    public void setCostAndParent(float newCost, Arc newParent)
+    {
+        this.reached = true;
+        this.realisedCost = newCost;
+        this.parent = newParent;
+    }
+
+    public float getTotalCost()
+    {
+        return this.realisedCost;
     }
 
     public boolean isMarked()
@@ -98,6 +115,6 @@ public class Label implements Comparable<Label> {
 
     @Override
     public int compareTo(Label o) {
-        return Float.compare(this.realisedCost, o.realisedCost);
+        return Float.compare(this.getTotalCost(), o.getTotalCost());
     }
 }

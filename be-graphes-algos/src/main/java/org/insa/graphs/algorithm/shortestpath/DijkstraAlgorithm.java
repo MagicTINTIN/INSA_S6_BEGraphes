@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import org.insa.graphs.algorithm.AbstractInputData.Mode;
 import org.insa.graphs.algorithm.AbstractSolution.Status;
 import org.insa.graphs.algorithm.utils.BinaryHeap;
 import org.insa.graphs.model.Arc;
@@ -16,6 +17,10 @@ public class DijkstraAlgorithm extends ShortestPathAlgorithm {
 
     public DijkstraAlgorithm(ShortestPathData data) {
         super(data);
+    }
+
+    protected Label createLabel(Node n, Node d, Mode m) {
+        return new Label(n);
     }
 
     @Override
@@ -32,7 +37,7 @@ public class DijkstraAlgorithm extends ShortestPathAlgorithm {
         Label nodeLabels[] = new Label[nbNodes];
         BinaryHeap<Label> heap = new BinaryHeap<>();
         for (Node node : graph.getNodes()) {
-            nodeLabels[node.getId()] = new Label(node);
+            nodeLabels[node.getId()] = createLabel(node, data.getDestination(), data.getMode());
         }
 
         heap.insert(nodeLabels[originID]);
@@ -52,11 +57,11 @@ public class DijkstraAlgorithm extends ShortestPathAlgorithm {
 
             for (Arc arc : minNode.getSuccessors()) {
                 Node successor = arc.getDestination();
-                
+
                 if (!data.isAllowed(arc)) {
                     continue;
                 }
-                
+
                 Label successorLabel = nodeLabels[successor.getId()];
 
                 if (!successorLabel.isMarked()) {
@@ -67,15 +72,23 @@ public class DijkstraAlgorithm extends ShortestPathAlgorithm {
                         notifyNodeReached(successor);
 
                     int res = successorLabel.updateCostAndParent(minVertex.getCost() + (float) data.getCost(arc),
-                            arc);
-                    // System.out.println("Updating vertex cost: " + res + ", accessing " + successor.getId()
-                    //         + " out of " + nbNodes);
+                             arc);
+
+                    // Another version
+                    // successorLabel.reach();
+                    // float newDistance = minVertex.getCost() + (float) data.getCost(arc);
+                    // if (!successorLabel.isMarked() && newDistance < successorLabel.getCost())
+                    //     successorLabel.setCostAndParent(newDistance, arc);
+
+                    // System.out.println("Updating vertex cost: " + res + ", accessing " +
+                    // successor.getId()
+                    // + " out of " + nbNodes);
                     heap.insert(successorLabel);
                     // System.out.println("Heap size : " + heap.size());
                     // try {
-                    //     // notifyNodeReached(successor);
+                    // // notifyNodeReached(successor);
                     // } catch (Exception e) {
-                    //     System.err.println("Error while removing/inserting node : " + e);
+                    // System.err.println("Error while removing/inserting node : " + e);
                     // }
 
                 }
@@ -83,7 +96,8 @@ public class DijkstraAlgorithm extends ShortestPathAlgorithm {
         }
 
         if (!isDestinationMarked) {
-            solution = new ShortestPathSolution(data, Status.INFEASIBLE);;
+            solution = new ShortestPathSolution(data, Status.INFEASIBLE);
+            ;
             return solution;
         }
 
