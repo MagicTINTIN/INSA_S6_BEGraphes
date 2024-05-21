@@ -14,12 +14,12 @@ public class AStarAlgorithm extends DijkstraAlgorithm {
     }
 
     @Override
-    protected Label createLabel(Node n, Node d, Mode m)
+    protected Label createLabel(Node n, Node d, Mode m, int maxSpeed)
     {
-        int maxSpeed = -1;
+        int mSpeed = -1;
         if (m.equals(AbstractInputData.Mode.TIME))
-            maxSpeed = 130;
-        return new LabelStar(n, d, maxSpeed);
+            mSpeed = maxSpeed;
+        return new LabelStar(n, d, mSpeed);
     }
 
 }

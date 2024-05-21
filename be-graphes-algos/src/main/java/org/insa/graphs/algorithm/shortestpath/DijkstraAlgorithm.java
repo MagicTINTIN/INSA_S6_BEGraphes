@@ -10,6 +10,7 @@ import org.insa.graphs.algorithm.AbstractSolution.Status;
 import org.insa.graphs.algorithm.utils.BinaryHeap;
 import org.insa.graphs.model.Arc;
 import org.insa.graphs.model.Graph;
+import org.insa.graphs.model.GraphStatistics;
 import org.insa.graphs.model.Node;
 import org.insa.graphs.model.Path;
 
@@ -19,7 +20,7 @@ public class DijkstraAlgorithm extends ShortestPathAlgorithm {
         super(data);
     }
 
-    protected Label createLabel(Node n, Node d, Mode m) {
+    protected Label createLabel(Node n, Node d, Mode m, int maxSpeed) {
         return new Label(n);
     }
 
@@ -33,11 +34,15 @@ public class DijkstraAlgorithm extends ShortestPathAlgorithm {
 
         // initialising
         Graph graph = data.getGraph();
+        int maxSpeed = data.getGraph().getGraphInformation().getMaximumSpeed();
+        if (maxSpeed == GraphStatistics.NO_MAXIMUM_SPEED)
+            maxSpeed = 142;
         final int nbNodes = graph.size();
+        // System.out.println("Max speed used on the graph: " + maxSpeed + "km/h");
         Label nodeLabels[] = new Label[nbNodes];
         BinaryHeap<Label> heap = new BinaryHeap<>();
         for (Node node : graph.getNodes()) {
-            nodeLabels[node.getId()] = createLabel(node, data.getDestination(), data.getMode());
+            nodeLabels[node.getId()] = createLabel(node, data.getDestination(), data.getMode(), maxSpeed);
         }
 
         heap.insert(nodeLabels[originID]);
