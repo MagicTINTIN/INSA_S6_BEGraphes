@@ -6,6 +6,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "ShortestPathAlgorithmTest",
+            "request": "launch",
+            "mainClass": "org.insa.graphs.gui.simple.ShortestPathAlgorithmTest",
+            "projectName": "be-graphes-gui"
+        },
+        {
+            "type": "java",
             "name": "Current File",
             "request": "launch",
             "mainClass": "${file}"
