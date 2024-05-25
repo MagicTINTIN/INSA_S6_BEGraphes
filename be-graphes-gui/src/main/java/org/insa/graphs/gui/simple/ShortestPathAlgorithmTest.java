@@ -14,6 +14,7 @@ import java.util.Random;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
+import javax.swing.text.StyledEditorKit.BoldAction;
 
 import org.insa.graphs.algorithm.ArcInspector;
 import org.insa.graphs.algorithm.ArcInspectorFactory;
@@ -105,9 +106,20 @@ public class ShortestPathAlgorithmTest {
         return returnVal;
     }
 
-    public static void execTests(Graph graph, int numberOfTests, String testName) {
+    public static void execTests(Graph graph, int numberOfTests, String testName, Boolean all) {
         Format formatter = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
         String outputResNameFile = "test" + testName + "_" + formatter.format(new Date()) + ".csv";
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(outputResNameFile, true));
+            if (all)
+                writer.append("feasibleBellman,lengthBellman,timeBellman,solvingTimeBellman,feasibleDijkstra,lengthDijkstra,timeDijkstra,solvingTimeDijkstra,feasibleAStar,lengthAStar,timeAStar,solvingTimeAStar\n");
+            else
+                writer.append("feasibleDijkstra,lengthDijkstra,timeDijkstra,solvingTimeDijkstra,feasibleAStar,lengthAStar,timeAStar,solvingTimeAStar\n");
+
+            writer.close();
+        } catch (Exception e) {
+            System.err.println("ERROR WITH FILE WRITING!\nHead not written.");
+        }
 
         int numberOfNodes = graph.getNodes().size();
         for (int i = 0; i < numberOfTests; i++) {
@@ -116,12 +128,11 @@ public class ShortestPathAlgorithmTest {
             while (destinationIndex == originIndex) {
                 destinationIndex = ThreadLocalRandom.current().nextInt(0, numberOfNodes + 1);
             }
-            System.out.println("TEST[" + i + "/" + numberOfTests + "]: " + originIndex + " -> " + destinationIndex);
+            System.out.println(testName + ": TEST[" + i + "/" + numberOfTests + "]: " + originIndex + " -> " + destinationIndex);
 
             String res = testAll(originIndex, destinationIndex, 0, graph);
             try {
                 BufferedWriter writer = new BufferedWriter(new FileWriter(outputResNameFile, true));
-                writer.append("feasibleBellman,lengthBellman,timeBellman,solvingTimeBellman,feasibleDijkstra,lengthDijkstra,timeDijkstra,solvingTimeDijkstra,feasibleAStar,lengthAStar,timeAStar,solvingTimeAStar");
                 writer.append(res);
 
                 writer.close();
@@ -137,10 +148,17 @@ public class ShortestPathAlgorithmTest {
         // Visit these directory to see the list of available files on Commetud.
         // final String mapName = "/mnt/commetud/3eme Annee
         // MIC/Graphes-et-Algorithmes/Maps/insa.mapgr";
-        final String carreMapName = "/home/utilisateur/INSA/S6/graphes/INSA_S6_BEGraphes/Maps/carre.mapgr";
-        final String insaMapName = "/home/utilisateur/INSA/S6/graphes/INSA_S6_BEGraphes/Maps/insa.mapgr";
-        final String toulouseMapName = "/home/utilisateur/INSA/S6/graphes/INSA_S6_BEGraphes/Maps/toulouse.mapgr";
-        final String midipyreneesMapName = "/home/utilisateur/INSA/S6/graphes/INSA_S6_BEGraphes/Maps/toulouse.mapgr";
+        
+        // final String carreMapName = "/home/utilisateur/INSA/S6/graphes/INSA_S6_BEGraphes/Maps/carre.mapgr";
+        // final String insaMapName = "/home/utilisateur/INSA/S6/graphes/INSA_S6_BEGraphes/Maps/insa.mapgr";
+        // final String toulouseMapName = "/home/utilisateur/INSA/S6/graphes/INSA_S6_BEGraphes/Maps/toulouse.mapgr";
+        // final String midipyreneesMapName = "/home/utilisateur/INSA/S6/graphes/INSA_S6_BEGraphes/Maps/toulouse.mapgr";
+        
+        final String carreMapName = "Maps/carre.mapgr";
+        final String insaMapName = "Maps/insa.mapgr";
+        final String toulouseMapName = "Maps/toulouse.mapgr";
+        final String midipyreneesMapName = "Maps/toulouse.mapgr";
+        
         // final String pathName = "/mnt/commetud/3eme Annee
         // MIC/Graphes-et-Algorithmes/Paths/path_fr31insa_rangueil_r2.path";
 
@@ -168,7 +186,7 @@ public class ShortestPathAlgorithmTest {
         // Create the drawing:
         // final Drawing drawing = createDrawing();
 
-        execTests(insaGraph, 10, "insa");
+        execTests(insaGraph, 10, "insa", true);
 
         // TODO: Create a PathReader.
         final PathReader pathReader = null;
