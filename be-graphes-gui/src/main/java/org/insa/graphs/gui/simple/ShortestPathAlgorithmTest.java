@@ -3,8 +3,12 @@ package org.insa.graphs.gui.simple;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.io.BufferedInputStream;
+import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
@@ -28,6 +32,8 @@ import org.insa.graphs.model.io.GraphReader;
 import org.insa.graphs.model.io.PathReader;
 
 import java.util.concurrent.ThreadLocalRandom;
+import java.text.SimpleDateFormat;
+import java.text.Format;
 
 public class ShortestPathAlgorithmTest {
 
@@ -55,28 +61,54 @@ public class ShortestPathAlgorithmTest {
         return basicDrawing;
     }
 
-    public static void testAll(int origin, int destination, int road, Graph graph) {
-        Node originNode = new Node(origin, null);
-        Node destinationNode = new Node(destination, null);
+    public static String testAll(int origin, int destination, int road, Graph graph) {
+        String returnVal = "";
+        Node originNode = graph.getNodes().get(origin);// new Node(origin, null);
+        Node destinationNode = graph.getNodes().get(destination);// new Node(destination, );
         List<ArcInspector> listInspector = new ArcInspectorFactory().getAllFilters();
         ArcInspector aInspector = listInspector.get(road);
         ShortestPathData data = new ShortestPathData(graph, originNode, destinationNode, aInspector);
-        
+
         BellmanFordAlgorithm bellmanford = new BellmanFordAlgorithm(data);
         DijkstraAlgorithm dijkstra = new DijkstraAlgorithm(data);
         AStarAlgorithm astar = new AStarAlgorithm(data);
 
         ShortestPathSolution bellmanfordSolution = bellmanford.run();
-        System.out.println("- Bellman-Ford: (feasible: " + bellmanfordSolution.isFeasible() + ") " + bellmanfordSolution.getPath().getLength() + "m, " +  bellmanfordSolution.getPath().getMinimumTravelTime() + "s [solved in " + bellmanfordSolution.getSolvingTime() + "s]");
-        ShortestPathSolution dijkstraSolution = dijkstra.run();
-        System.out.println("- Dijkstra: (feasible: " + dijkstraSolution.isFeasible() + ") " + dijkstraSolution.getPath().getLength() + "m, " +  dijkstraSolution.getPath().getMinimumTravelTime() + "s [solved in " + dijkstraSolution.getSolvingTime() + "s]");
-        ShortestPathSolution astarSolution = astar.run();
-        System.out.println("- A*: (feasible: " + astarSolution.isFeasible() + ") " + astarSolution.getPath().getLength() + "m, " +  astarSolution.getPath().getMinimumTravelTime() + "s [solved in " + astarSolution.getSolvingTime() + "s]");
+        if (bellmanfordSolution.isFeasible())
+            returnVal += "1," + bellmanfordSolution.getPath().getLength() + ","
+                    + bellmanfordSolution.getPath().getMinimumTravelTime() + ","
+                    + bellmanfordSolution.getSolvingTime().toMillis() + ",";
+        else
+            returnVal += "0,-1,-1,"
+                    + bellmanfordSolution.getSolvingTime().toMillis() + ",";
+        System.out.println("- Bellman-Ford: solved in " + bellmanfordSolution.getSolvingTime().toMillis() + "ms");
 
+        ShortestPathSolution dijkstraSolution = dijkstra.run();
+        if (dijkstraSolution.isFeasible())
+            returnVal += "1," + dijkstraSolution.getPath().getLength() + ","
+                    + dijkstraSolution.getPath().getMinimumTravelTime() + ","
+                    + dijkstraSolution.getSolvingTime().toMillis() + ",";
+        else
+            returnVal += "0,-1,-1,"
+                    + dijkstraSolution.getSolvingTime().toMillis() + ",";
+        System.out.println("- Dijkstra: solved in " + dijkstraSolution.getSolvingTime().toMillis() + "ms");
+
+        ShortestPathSolution astarSolution = astar.run();
+        if (astarSolution.isFeasible())
+            returnVal += "1," + astarSolution.getPath().getLength() + ","
+                    + astarSolution.getPath().getMinimumTravelTime() + ","
+                    + astarSolution.getSolvingTime().toMillis() + "\n";
+        else
+            returnVal += "0,-1,-1,"
+                    + astarSolution.getSolvingTime().toMillis() + "\n";
+        System.out.println("- A*: solved in " + astarSolution.getSolvingTime().toMillis() + "ms");
+        return returnVal;
     }
 
-    public static void execTests(Graph graph, int numberOfTests)
-    {
+    public static void execTests(Graph graph, int numberOfTests, String testName) {
+        Format formatter = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+        String outputResNameFile = "test" + testName + "_" + formatter.format(new Date()) + ".csv";
+
         int numberOfNodes = graph.getNodes().size();
         for (int i = 0; i < numberOfTests; i++) {
             int originIndex = ThreadLocalRandom.current().nextInt(0, numberOfNodes + 1);
@@ -84,20 +116,33 @@ public class ShortestPathAlgorithmTest {
             while (destinationIndex == originIndex) {
                 destinationIndex = ThreadLocalRandom.current().nextInt(0, numberOfNodes + 1);
             }
-            System.out.println("TEST[" + i + "/"+ numberOfTests +"]: " + originIndex + " -> " + destinationIndex);
-            testAll(originIndex, destinationIndex, 0, graph);
+            System.out.println("TEST[" + i + "/" + numberOfTests + "]: " + originIndex + " -> " + destinationIndex);
+
+            String res = testAll(originIndex, destinationIndex, 0, graph);
+            try {
+                BufferedWriter writer = new BufferedWriter(new FileWriter(outputResNameFile, true));
+                writer.append("feasibleBellman,lengthBellman,timeBellman,solvingTimeBellman,feasibleDijkstra,lengthDijkstra,timeDijkstra,solvingTimeDijkstra,feasibleAStar,lengthAStar,timeAStar,solvingTimeAStar");
+                writer.append(res);
+
+                writer.close();
+            } catch (Exception e) {
+                System.err.println("ERROR WITH FILE WRITING!");
+                System.out.println(res);
+            }
         }
     }
 
     public static void main(String[] args) throws Exception {
 
         // Visit these directory to see the list of available files on Commetud.
-        //final String mapName = "/mnt/commetud/3eme Annee MIC/Graphes-et-Algorithmes/Maps/insa.mapgr";
+        // final String mapName = "/mnt/commetud/3eme Annee
+        // MIC/Graphes-et-Algorithmes/Maps/insa.mapgr";
         final String carreMapName = "/home/utilisateur/INSA/S6/graphes/INSA_S6_BEGraphes/Maps/carre.mapgr";
         final String insaMapName = "/home/utilisateur/INSA/S6/graphes/INSA_S6_BEGraphes/Maps/insa.mapgr";
         final String toulouseMapName = "/home/utilisateur/INSA/S6/graphes/INSA_S6_BEGraphes/Maps/toulouse.mapgr";
         final String midipyreneesMapName = "/home/utilisateur/INSA/S6/graphes/INSA_S6_BEGraphes/Maps/toulouse.mapgr";
-        //final String pathName = "/mnt/commetud/3eme Annee MIC/Graphes-et-Algorithmes/Paths/path_fr31insa_rangueil_r2.path";
+        // final String pathName = "/mnt/commetud/3eme Annee
+        // MIC/Graphes-et-Algorithmes/Paths/path_fr31insa_rangueil_r2.path";
 
         // Create a graph reader.
         final GraphReader carreGraphReader = new BinaryGraphReader(
@@ -121,9 +166,9 @@ public class ShortestPathAlgorithmTest {
         midipyreneesGraphReader.close();
 
         // Create the drawing:
-        //final Drawing drawing = createDrawing();
+        // final Drawing drawing = createDrawing();
 
-        execTests(carreGraph, 10);
+        execTests(insaGraph, 10, "insa");
 
         // TODO: Create a PathReader.
         final PathReader pathReader = null;
