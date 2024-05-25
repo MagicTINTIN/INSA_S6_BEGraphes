@@ -8,6 +8,7 @@
             "type": "java",
             "name": "ShortestPathAlgorithmTest",
             "request": "launch",
+            "args": ["-Xms4096m", "-Xmx10016m"],
             "mainClass": "org.insa.graphs.gui.simple.ShortestPathAlgorithmTest",
             "projectName": "be-graphes-gui"
         },
@@ -15,12 +16,14 @@
             "type": "java",
             "name": "Current File",
             "request": "launch",
+            "args": ["-Xms4096m", "-Xmx10016m"],
             "mainClass": "${file}"
         },
         {
             "type": "java",
             "name": "BinaryHeapFormatter",
             "request": "launch",
+            "args": ["-Xms4096m", "-Xmx10016m"],
             "mainClass": "org.insa.graphs.algorithm.utils.BinaryHeapFormatter",
             "projectName": "be-graphes-algos"
         },
@@ -28,6 +31,7 @@
             "type": "java",
             "name": "MainWindow",
             "request": "launch",
+            "args": ["-Xms4096m", "-Xmx10016m"],
             "mainClass": "org.insa.graphs.gui.MainWindow",
             "projectName": "be-graphes-gui"
         },
@@ -35,6 +39,7 @@
             "type": "java",
             "name": "Launch",
             "request": "launch",
+            "args": ["-Xms4096m", "-Xmx10016m"],
             "mainClass": "org.insa.graphs.gui.simple.Launch",
             "projectName": "be-graphes-gui"
         }

@@ -35,21 +35,21 @@ public class DijkstraAlgorithm extends ShortestPathAlgorithm {
         // initialising
         Graph graph = data.getGraph();
         int maxSpeed = data.getGraph().getGraphInformation().getMaximumSpeed();
-        if (maxSpeed == GraphStatistics.NO_MAXIMUM_SPEED)
-            maxSpeed = 142;
+        if (maxSpeed == GraphStatistics.NO_MAXIMUM_SPEED || true)
+            maxSpeed = 20;//142;
         final int nbNodes = graph.size();
-        // System.out.println("Max speed used on the graph: " + maxSpeed + "km/h");
         Label nodeLabels[] = new Label[nbNodes];
         BinaryHeap<Label> heap = new BinaryHeap<>();
-        for (Node node : graph.getNodes()) {
-            nodeLabels[node.getId()] = createLabel(node, data.getDestination(), data.getMode(), maxSpeed);
-        }
+        // for (Node node : graph.getNodes()) {
+        //     nodeLabels[node.getId()] = createLabel(node, data.getDestination(), data.getMode(), maxSpeed);
+        // }
 
+        nodeLabels[originID] = createLabel(data.getOrigin(), data.getDestination(), data.getMode(), maxSpeed);
         heap.insert(nodeLabels[originID]);
         nodeLabels[originID].setCost(0);
+        notifyOriginProcessed(data.getOrigin());
 
         while (!heap.isEmpty() && !isDestinationMarked) {
-            // System.out.println("Exploring new edge");
             Label minVertex = heap.deleteMin();
 
             nodeLabels[minVertex.getID()].mark();
@@ -67,10 +67,11 @@ public class DijkstraAlgorithm extends ShortestPathAlgorithm {
                     continue;
                 }
 
+                if (nodeLabels[successor.getId()] == null)
+                    nodeLabels[successor.getId()] = createLabel(graph.getNodes().get(successor.getId()), data.getDestination(), data.getMode(), maxSpeed);
                 Label successorLabel = nodeLabels[successor.getId()];
 
                 if (!successorLabel.isMarked()) {
-                    // System.out.println("Reaching node " + successor.getId());
                     if (successorLabel.getCost() != Float.MAX_VALUE)
                         heap.remove(successorLabel);
                     else
@@ -79,33 +80,17 @@ public class DijkstraAlgorithm extends ShortestPathAlgorithm {
                     int res = successorLabel.updateCostAndParent(minVertex.getCost() + (float) data.getCost(arc),
                              arc);
 
-                    // Another version
-                    // successorLabel.reach();
-                    // float newDistance = minVertex.getCost() + (float) data.getCost(arc);
-                    // if (!successorLabel.isMarked() && newDistance < successorLabel.getCost())
-                    //     successorLabel.setCostAndParent(newDistance, arc);
-
-                    // System.out.println("Updating vertex cost: " + res + ", accessing " +
-                    // successor.getId()
-                    // + " out of " + nbNodes);
                     heap.insert(successorLabel);
-                    // System.out.println("Heap size : " + heap.size());
-                    // try {
-                    // // notifyNodeReached(successor);
-                    // } catch (Exception e) {
-                    // System.err.println("Error while removing/inserting node : " + e);
-                    // }
-
                 }
             }
         }
 
         if (!isDestinationMarked) {
             solution = new ShortestPathSolution(data, Status.INFEASIBLE);
-            ;
             return solution;
         }
 
+        notifyDestinationReached(data.getDestination());
         ArrayList<Arc> shortestArcs = new ArrayList<>();
         Label goingBack = nodeLabels[destinationID];
         // System.out.println("Finished, going back");
