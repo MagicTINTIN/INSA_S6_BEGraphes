@@ -1,0 +1,111 @@
+@startuml
+
+abstract class AbstractAlgorithm {
+    # {abstract} AbstractInputData data
+    # Observer observers[]
+    + AbstractInputData getInputData()
+    + AbstractSolution run()
+    # {abstract} AbstractSolution doRun();
+}
+
+abstract class AbstractInputData {
+    + enum Mode
+    - const Graph graph
+    # const ArcInspector arcInspector
+    + Graph getGraph()
+    + double getCost()
+    + Mode getMode()
+    + bool isAllowed()
+}
+
+
+abstract class AbstractSolution {
+    + enum Status
+    - const AbstractInputData data
+    + AbstractInputData getInputData()
+    + Status getStatus()
+    + Duration getSolvingTime()
+    + bool isFeasible()
+}
+
+interface ArcInspector {
+    + bool isAllowed();
+    + double getCost();
+    + Mode getMode();
+}
+
+class ArcInspectorFactory {
+    {static} ArcInspector allArcsL
+    {static} ArcInspector forCarsL
+    {static} ArcInspector forCarsT
+    {static} ArcInspector forBicyclesT
+    + {static} ArcInspector[] getAllFilters()
+}
+
+class ShortestPathSolution {
+    - const Path path
+    + Path getPath()
+}
+
+class ShortestPathData {
+    - const Node origin, destination
+    + Node getOrigin()
+    + Node getDestination()
+}
+
+class ShortestPathAlgorithm {
+    + ShortestPathSolution run()
+    # {abstract} ShortestPathSolution doRun()
+    + ShortestPathData getInputData()
+    + notifyOriginProcessed()
+    + notifyNodeReached()
+    + notifyNodeMarked()
+    + notifyDestinationReached()
+}
+
+class AlgorithmFactory {
+    + {static} registerAlgorithm()
+    + {static} AbstractAlgorithm createAlgorithm()
+}
+
+class BellmanFordAlgorithm {
+    # ShortestPathSolution doRun()
+}
+
+class DijkstraAlgorithm {
+    # ShortestPathSolution doRun()
+    # Label createLabel()
+}
+
+class AStarAlgorithm {
+    # ShortestPathSolution doRun()
+    # LabelStar createLabel()
+}
+
+class Label {
+}
+
+class LabelStar {
+}
+
+Label "0..*" --* DijkstraAlgorithm
+AStarAlgorithm --|> DijkstraAlgorithm
+LabelStar "0..*" --* AStarAlgorithm
+LabelStar --|> Label
+AbstractInputData --* AbstractAlgorithm::data
+AbstractInputData --* AbstractSolution::data
+AbstractSolution --> AbstractAlgorithm::run
+AbstractAlgorithm --> AlgorithmFactory::createAlgorithm
+ArcInspectorFactory *-- ArcInspector
+AbstractInputData *-- ArcInspector
+
+ShortestPathSolution --|> AbstractSolution
+ShortestPathData --|> AbstractInputData
+ShortestPathAlgorithm --|> AbstractAlgorithm
+
+ShortestPathData --> ShortestPathAlgorithm::getInputData
+ShortestPathSolution --> ShortestPathAlgorithm::run
+
+BellmanFordAlgorithm --|> ShortestPathAlgorithm
+DijkstraAlgorithm --|> ShortestPathAlgorithm
+@enduml
