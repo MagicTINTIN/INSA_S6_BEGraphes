@@ -267,7 +267,7 @@ public class MainWindow extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 StartActionEvent evt = (StartActionEvent) e;
                 TermasData data = new TermasData(graph, evt.getNodes().get(0),
-                        evt.getNodes().get(1), evt.getArcFilter());
+                        evt.getNodes().get(1), evt.getNodes().get(2), evt.getNodes().get(3), evt.getArcFilter());
 
                 TermasAlgorithm termasAlgorithm = null;
                 try {

@@ -50,16 +50,16 @@ public class TermasSolution extends AbstractSolution {
     public String toString() {
         String info = null;
         if (!isFeasible()) {
-            info = String.format("No path found from node #%d to node #%d",
-                    getInputData().getOrigin().getId(), getInputData().getDestination().getId());
+            info = String.format("No path found around node #%d starting by node #%d (between %f and %f)",
+                    getInputData().getCenter().getId(), getInputData().getStart().getId(), getInputData().getMin() , getInputData().getMax());
         }
         else {
             double cost = 0;
             for (Arc arc: getPath().getArcs()) {
                 cost += getInputData().getCost(arc);
             }
-            info = String.format("Found a path from node #%d to node #%d",
-                    getInputData().getOrigin().getId(), getInputData().getDestination().getId());
+            info = String.format("Found a path found around node #%d starting by node #%d (between %f and %f)",
+                getInputData().getCenter().getId(), getInputData().getStart().getId(), getInputData().getMin() , getInputData().getMax());
             if (getInputData().getMode() == Mode.LENGTH) {
                 info = String.format("%s, %.4f kilometers", info, cost / 1000.0);
             }
@@ -67,7 +67,7 @@ public class TermasSolution extends AbstractSolution {
                 info = String.format("%s, %.4f minutes", info, cost / 60.0);
             }
         }
-        info += " in " + getSolvingTime().getSeconds() + " seconds.";
+        info += " in " + (getSolvingTime().getNano()/1000) + " ms.";
         return info;
     }
 
