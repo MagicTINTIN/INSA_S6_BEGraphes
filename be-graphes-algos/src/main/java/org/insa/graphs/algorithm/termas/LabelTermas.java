@@ -6,9 +6,9 @@ import org.insa.graphs.model.Point;
 
 public class LabelTermas implements Comparable<LabelTermas> {
     private Node currentVertex;
-    private Node center;
+    private Node center, destination;
     private float distanceToCenter, radius, minRadius, maxRadius;
-    private float fitnessWeight;
+    private float fitnessWeight, shortestDistance;
     private boolean accessible;
     private boolean marked;
     private boolean reached;
@@ -28,33 +28,55 @@ public class LabelTermas implements Comparable<LabelTermas> {
         this.ID = defaultVertex.getId();
         this.reached = false;
         this.center = center;
+        this.destination = null;
         this.radius = radius;
         this.minRadius = min;
         this.maxRadius = max;
         this.distanceToCenter = distanceToCenter(center, defaultVertex);
         if (this.distanceToCenter >= minRadius && this.distanceToCenter <= maxRadius) {
             this.fitnessWeight = maxRadius * (float) distanceToGeometryWeight(center, defaultVertex, (double) radius);
+            this.shortestDistance = Float.MAX_VALUE;
             this.accessible = true;
         } else {
             this.fitnessWeight = Float.MAX_VALUE;
+            this.shortestDistance = Float.MAX_VALUE;
             this.accessible = false;
         }
 
     }
 
-    public LabelTermas(Node cVertex, boolean m, boolean r, float cost, Arc par, Node center, float min, float max,
+    public LabelTermas(Node cVertex, Node destination, boolean m, boolean r, float cost, Arc par, Node center, float min, float max,
             float radius) {
         this(cVertex, center, min, max, radius);
+        this.destination = destination;
         this.marked = m;
         this.realisedCost = cost;
         this.parent = par;
         this.reached = r;
+
+        if (this.accessible) {
+            this.shortestDistance = distanceToCenter(destination, cVertex);
+        }
     }
 
     public double distanceToCircleWeight(Node center, Node position, double radius) {
         return Math.pow(Point.distance(center.getPoint(), position.getPoint()) - radius, 4);
     }
 
+    public static Point calculatePointOnCircle(Point o, Point a, float radius, double angle) {
+        // initial angle from O to A
+        double initialAngle = Math.atan2(a.getLatitude() - o.getLatitude(), a.getLongitude() - o.getLongitude());
+
+        // new angle for the point on the circle
+        double newAngle = initialAngle + angle;
+
+        // new coordinates
+        float xb = o.getLongitude() + radius * (float) Math.cos(newAngle);
+        float yb = o.getLatitude() + radius * (float) Math.sin(newAngle);
+
+        return new Point(xb, yb);
+    }
+    
     public float distanceToCenter(Node center, Node position) {
         return (float) Point.distance(center.getPoint(), position.getPoint());
     }
@@ -71,8 +93,19 @@ public class LabelTermas implements Comparable<LabelTermas> {
         return this.accessible;
     }
 
+    public float getFitness() {
+        return this.fitnessWeight;
+    }
+
     public boolean hasBeenReached() {
         return this.reached;
+    }
+
+    public void setDestination(Node destination) {
+        if (this.accessible) {
+            this.destination = destination;
+            this.shortestDistance = distanceToCenter(destination, this.currentVertex);
+        }
     }
 
     public void reach() {
@@ -109,7 +142,7 @@ public class LabelTermas implements Comparable<LabelTermas> {
     }
 
     public float getTotalCost() {
-        return this.realisedCost + fitnessWeight;
+        return this.realisedCost + fitnessWeight + shortestDistance;
     }
 
     public boolean isMarked() {

@@ -13,6 +13,7 @@ import org.insa.graphs.model.Graph;
 import org.insa.graphs.model.GraphStatistics;
 import org.insa.graphs.model.Node;
 import org.insa.graphs.model.Path;
+import org.insa.graphs.model.Point;
 
 public class TermasDijkstraAlgorithm extends TermasAlgorithm {
     private float minRadius;
@@ -22,46 +23,82 @@ public class TermasDijkstraAlgorithm extends TermasAlgorithm {
         super(data);
     }
 
-    public TermasDijkstraAlgorithm(TermasData data, float minRadius, float maxRadius) {
-        super(data);
-        this.minRadius = minRadius;
-        this.maxRadius = maxRadius;
-    }
-
-    protected LabelTermas createLabel(Node n, Node d, Mode m, int maxSpeed) {
-        return new LabelTermas(n);
+    protected LabelTermas createLabel(Node n, Node c, float min, float max, float radius) {
+        return new LabelTermas(n, c, min, max, radius);
     }
 
     @Override
     protected TermasSolution doRun() {
         final TermasData data = getInputData();
-        final int centerID = data.getOrigin().getId();
-        final int destinationID = data.getDestination().getId();
+        final double minRadius = data.getMin();
+        final double maxRadius = data.getMax();
+        final int centerID = data.getCenter().getId();
+        final int startID = data.getStart().getId();
         boolean isDestinationMarked = false;
         TermasSolution solution = null;
 
         // initialising
         Graph graph = data.getGraph();
-        int maxSpeed = data.getGraph().getGraphInformation().getMaximumSpeed();
-        if (maxSpeed == GraphStatistics.NO_MAXIMUM_SPEED || true)
-            maxSpeed = 20;//142;
         final int nbNodes = graph.size();
         LabelTermas nodeLabels[] = new LabelTermas[nbNodes];
         BinaryHeap<LabelTermas> heap = new BinaryHeap<>();
-        // for (Node node : graph.getNodes()) {
-        //     nodeLabels[node.getId()] = createLabel(node, data.getDestination(), data.getMode(), maxSpeed);
-        // }
 
-        nodeLabels[centerID] = createLabel(data.getOrigin(), data.getDestination(), data.getMode(), maxSpeed);
-        heap.insert(nodeLabels[centerID]);
-        nodeLabels[centerID].setCost(0);
-        notifyOriginProcessed(data.getOrigin());
+        System.out.println("Center : x/lon: " + data.getCenter().getPoint().getLongitude() + ", y/lat: " + data.getCenter().getPoint().getLatitude());
+        System.out.println("Start : x/lon: " + data.getStart().getPoint().getLongitude() + ", y/lat: " + data.getStart().getPoint().getLatitude());
+
+        Point firstIdealPosition = LabelTermas.calculatePointOnCircle(data.getCenter().getPoint(), data.getStart().getPoint(), (float)data.getRadius(), 2*Math.PI/3);
+        System.out.println("1st Ideal : x/lon: " + firstIdealPosition.getLongitude() + ", y/lat: " + firstIdealPosition.getLatitude());
+        Node firstDestination = null;
+        float firstFitness = Float.MAX_VALUE;
+
+        Point secondIdealPosition = LabelTermas.calculatePointOnCircle(data.getCenter().getPoint(), data.getStart().getPoint(), (float)data.getRadius(), -2*Math.PI/3);
+        System.out.println("2nd Ideal : x/lon: " + secondIdealPosition.getLongitude() + ", y/lat: " + secondIdealPosition.getLatitude());
+        Node secondDestination = null;
+        float secondFitness = Float.MAX_VALUE;
+
+        for (Node node : graph.getNodes()) {
+            nodeLabels[node.getId()] = createLabel(node, data.getCenter(), (float) data.getMin(), (float) data.getMax(), (float) data.getRadius());
+            if (nodeLabels[node.getId()].isAccessible()) {
+                float dTo1 = (float) Point.distance(node.getPoint(), firstIdealPosition);
+                float dTo2 = (float) Point.distance(node.getPoint(), secondIdealPosition);
+                if (dTo1 < firstFitness) {
+                    firstDestination = node;
+                    firstFitness = dTo1;
+                }
+                if (dTo2 < secondFitness) {
+                    secondDestination = node;
+                    secondFitness = dTo2;
+                }
+            }
+        }
+
+
+        if (firstDestination == null || firstFitness == Float.MAX_VALUE || secondDestination == null || secondFitness == Float.MAX_VALUE
+            || firstDestination.getId() == data.getStart().getId()
+            || secondDestination.getId() == firstDestination.getId()
+            || data.getStart().getId() == secondDestination.getId()) {
+            solution = new TermasSolution(data, Status.INFEASIBLE);
+            return solution;
+        }
+
+        System.out.println("1st Real : x/lon: " + firstDestination.getPoint().getLongitude() + ", y/lat: " + firstDestination.getPoint().getLatitude());
+        System.out.println("2nd Real : x/lon: " + secondDestination.getPoint().getLongitude() + ", y/lat: " + secondDestination.getPoint().getLatitude());
+        final int firstDestinationID = firstDestination.getId();
+        final int secondDestinationID = secondDestination.getId();
+
+        for (Node node : graph.getNodes()) {
+            nodeLabels[node.getId()].setDestination(firstDestination);
+        }
+
+        heap.insert(nodeLabels[startID]);
+        nodeLabels[startID].setCost(0);
+        notifyOriginProcessed(data.getStart());
 
         while (!heap.isEmpty() && !isDestinationMarked) {
             LabelTermas minVertex = heap.deleteMin();
 
             nodeLabels[minVertex.getID()].mark();
-            if (minVertex.getID() == destinationID) {
+            if (minVertex.getID() == firstDestinationID) {
                 isDestinationMarked = true;
                 break;
             }
@@ -71,13 +108,15 @@ public class TermasDijkstraAlgorithm extends TermasAlgorithm {
             for (Arc arc : minNode.getSuccessors()) {
                 Node successor = arc.getDestination();
 
-                if (!data.isAllowed(arc) || !) {
+                if (!data.isAllowed(arc)) {
                     continue;
                 }
 
-                if (nodeLabels[successor.getId()] == null)
-                    nodeLabels[successor.getId()] = createLabel(graph.getNodes().get(successor.getId()), data.getDestination(), data.getMode(), maxSpeed);
-                    LabelTermas successorLabel = nodeLabels[successor.getId()];
+                LabelTermas successorLabel = nodeLabels[successor.getId()];
+
+                if (!successorLabel.isAccessible()) {
+                    continue;
+                }
 
                 if (!successorLabel.isMarked()) {
                     if (successorLabel.getCost() != Float.MAX_VALUE)
@@ -98,9 +137,13 @@ public class TermasDijkstraAlgorithm extends TermasAlgorithm {
             return solution;
         }
 
-        notifyDestinationReached(data.getDestination());
+        // for (Node node : graph.getNodes()) {
+        //     nodeLabels[node.getId()].setDestination(secondDestination);
+        // }
+
+        notifyDestinationReached(firstDestination);
         ArrayList<Arc> shortestArcs = new ArrayList<>();
-        LabelTermas goingBack = nodeLabels[destinationID];
+        LabelTermas goingBack = nodeLabels[firstDestinationID];
         // System.out.println("Finished, going back");
         while (goingBack.getParent() != null) {
             shortestArcs.add(goingBack.getParent());

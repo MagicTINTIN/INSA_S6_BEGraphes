@@ -10,7 +10,7 @@ public class TermasData extends AbstractInputData {
 
     // Origin and start nodes.
     private final Node center, start;
-    private final double minRadius, maxRadius;
+    private final double radius, minRadius, maxRadius;
 
     /**
      * Construct a new instance of ShortestPathInputData with the given parameters.
@@ -27,6 +27,7 @@ public class TermasData extends AbstractInputData {
         this.start = start;
         this.minRadius = Point.distance(center.getPoint(), minNode.getPoint());
         this.maxRadius = Point.distance(center.getPoint(), maxNode.getPoint());
+        this.radius = Point.distance(center.getPoint(), start.getPoint());
     }
 
     /**
@@ -41,6 +42,13 @@ public class TermasData extends AbstractInputData {
      */
     public Node getStart() {
         return start;
+    }
+
+    /**
+     * @return Radius from the center.
+     */
+    public double getRadius() {
+        return radius;
     }
 
     /**
