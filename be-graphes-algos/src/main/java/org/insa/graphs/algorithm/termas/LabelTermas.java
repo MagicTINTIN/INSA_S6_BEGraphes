@@ -63,18 +63,24 @@ public class LabelTermas implements Comparable<LabelTermas> {
         return Math.pow(Point.distance(center.getPoint(), position.getPoint()) - radius, 4);
     }
 
-    public static Point calculatePointOnCircle(Point o, Point a, float radius, double angle) {
-        // initial angle from O to A
-        double initialAngle = Math.atan2(a.getLatitude() - o.getLatitude(), a.getLongitude() - o.getLongitude());
+    public static Point calculatePointOnCircle(Point o, Point a, double angle) {
+        double latO = Math.toRadians(o.getLatitude());
+        double lonO = Math.toRadians(o.getLongitude());
+        double latA = Math.toRadians(a.getLatitude());
+        double lonA = Math.toRadians(a.getLongitude());
 
-        // new angle for the point on the circle
+        double distanceOA = o.distanceTo(a) / Point.EARTH_RADIUS; // Central angle
+        double initialAngle = Math.atan2(Math.sin(lonA - lonO) * Math.cos(latA),
+                                         Math.cos(latO) * Math.sin(latA) - Math.sin(latO) * Math.cos(latA) * Math.cos(lonA - lonO));
+
         double newAngle = initialAngle + angle;
 
-        // new coordinates
-        float xb = o.getLongitude() + radius * (float) Math.cos(newAngle);
-        float yb = o.getLatitude() + radius * (float) Math.sin(newAngle);
+        double newLat = Math.asin(Math.sin(latO) * Math.cos(distanceOA) +
+                                  Math.cos(latO) * Math.sin(distanceOA) * Math.cos(newAngle));
+        double newLon = lonO + Math.atan2(Math.sin(newAngle) * Math.sin(distanceOA) * Math.cos(latO),
+                                          Math.cos(distanceOA) - Math.sin(latO) * Math.sin(newLat));
 
-        return new Point(xb, yb);
+        return new Point((float) Math.toDegrees(newLon), (float) Math.toDegrees(newLat));
     }
     
     public float distanceToCenter(Node center, Node position) {

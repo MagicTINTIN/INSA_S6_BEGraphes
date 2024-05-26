@@ -46,12 +46,12 @@ public class TermasDijkstraAlgorithm extends TermasAlgorithm {
         System.out.println("Center : x/lon: " + data.getCenter().getPoint().getLongitude() + ", y/lat: " + data.getCenter().getPoint().getLatitude());
         System.out.println("Start : x/lon: " + data.getStart().getPoint().getLongitude() + ", y/lat: " + data.getStart().getPoint().getLatitude());
 
-        Point firstIdealPosition = LabelTermas.calculatePointOnCircle(data.getCenter().getPoint(), data.getStart().getPoint(), (float)data.getRadius(), 2*Math.PI/3);
+        Point firstIdealPosition = LabelTermas.calculatePointOnCircle(data.getCenter().getPoint(), data.getStart().getPoint(), 2*Math.PI/3);
         System.out.println("1st Ideal : x/lon: " + firstIdealPosition.getLongitude() + ", y/lat: " + firstIdealPosition.getLatitude());
         Node firstDestination = null;
         float firstFitness = Float.MAX_VALUE;
 
-        Point secondIdealPosition = LabelTermas.calculatePointOnCircle(data.getCenter().getPoint(), data.getStart().getPoint(), (float)data.getRadius(), -2*Math.PI/3);
+        Point secondIdealPosition = LabelTermas.calculatePointOnCircle(data.getCenter().getPoint(), data.getStart().getPoint(), -2*Math.PI/3);
         System.out.println("2nd Ideal : x/lon: " + secondIdealPosition.getLongitude() + ", y/lat: " + secondIdealPosition.getLatitude());
         Node secondDestination = null;
         float secondFitness = Float.MAX_VALUE;
