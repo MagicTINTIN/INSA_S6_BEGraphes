@@ -35,7 +35,7 @@ public class TermasDijkstraAlgorithm extends TermasAlgorithm {
     @Override
     protected TermasSolution doRun() {
         final TermasData data = getInputData();
-        final int originID = data.getOrigin().getId();
+        final int centerID = data.getOrigin().getId();
         final int destinationID = data.getDestination().getId();
         boolean isDestinationMarked = false;
         TermasSolution solution = null;
@@ -52,9 +52,9 @@ public class TermasDijkstraAlgorithm extends TermasAlgorithm {
         //     nodeLabels[node.getId()] = createLabel(node, data.getDestination(), data.getMode(), maxSpeed);
         // }
 
-        nodeLabels[originID] = createLabel(data.getOrigin(), data.getDestination(), data.getMode(), maxSpeed);
-        heap.insert(nodeLabels[originID]);
-        nodeLabels[originID].setCost(0);
+        nodeLabels[centerID] = createLabel(data.getOrigin(), data.getDestination(), data.getMode(), maxSpeed);
+        heap.insert(nodeLabels[centerID]);
+        nodeLabels[centerID].setCost(0);
         notifyOriginProcessed(data.getOrigin());
 
         while (!heap.isEmpty() && !isDestinationMarked) {
@@ -71,7 +71,7 @@ public class TermasDijkstraAlgorithm extends TermasAlgorithm {
             for (Arc arc : minNode.getSuccessors()) {
                 Node successor = arc.getDestination();
 
-                if (!data.isAllowed(arc)) {
+                if (!data.isAllowed(arc) || !) {
                     continue;
                 }
 
