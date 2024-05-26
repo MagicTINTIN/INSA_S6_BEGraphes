@@ -17,8 +17,9 @@ public class LabelTermas implements Comparable<LabelTermas> {
     private int ID;
 
     public double distanceToGeometryWeight(Node center, Node position, double radius) {
-        // return distanceToCircleWeight(center, position, radius);
-        return distanceToStarWeight(center, position, radius);
+        return distanceToCircleWeight(center, position, radius);
+        // return distanceToStarWeight(center, position, radius);
+        //return distanceToRectangleWeight(center, position, radius);
     }
 
     public LabelTermas(Node defaultVertex, Node center, float min, float max, float radius) {
@@ -61,31 +62,7 @@ public class LabelTermas implements Comparable<LabelTermas> {
     }
 
     public double distanceToCircleWeight(Node center, Node position, double radius) {
-        return Math.pow(Point.distance(center.getPoint(), position.getPoint()) - radius, 2);
-    }
-    //Weight
-    public double distanceToStarWeight(Node center, Node position, double radius) {
-        Vec2 c = new Vec2(Math.toRadians(position.getPoint().getLatitude()), Math.toRadians(position.getPoint().getLongitude()));
-        final double intRadius = radius*.7;
-        Vec2 p = new Vec2(Math.toRadians(center.getPoint().getLatitude()), Math.toRadians(center.getPoint().getLongitude()));
-
-        Vec2 k1 = new Vec2(0.809016994375, -0.587785252292);
-        Vec2 k2 = new Vec2(-k1.x, k1.y);
-
-        p.x = Math.abs(p.x);
-        p.sub(Vec2.mul(k1, 2.*Math.max(Vec2.dot(k1, p), 0)));
-        p.sub(Vec2.mul(k2, 2.*Math.max(Vec2.dot(k2, p), 0)));
-
-        p.x = Math.abs(p.x);
-        p.y -= radius;
-
-        Vec2 ba = Vec2.sub(Vec2.mul(new Vec2(-k1.y, k1.x), intRadius), new Vec2(0, 1));
-        double h = Vec2.clamp(Vec2.dot(p, ba)/Vec2.dot(ba, ba), 0, radius);
-
-        Vec2 res = Vec2.sub(p, Vec2.mul(ba, h));
-        // Point resPoint = new Point((float) Math.toDegrees(res.x), (float) Math.toDegrees(res.y));
-        // return Math.pow(Point.distance(resPoint, position.getPoint()), 2);
-        return Math.pow(c.x - res.x, 2) + Math.pow(c.y - res.y, 2);
+        return 0 * Math.pow(Math.abs(Point.distance(center.getPoint(), position.getPoint()) - radius), 1.);
     }
 
     public static Point calculatePointOnCircle(Point o, Point a, double angle) {
@@ -143,7 +120,7 @@ public class LabelTermas implements Comparable<LabelTermas> {
     public void setDestination(Node destination) {
         if (this.accessible) {
             this.destination = destination;
-            this.shortestDistance = (float) Math.pow(distanceToCenter(destination, this.currentVertex), 2);
+            this.shortestDistance = (float) Math.pow(distanceToCenter(destination, this.currentVertex), 1);
         }
     }
 
@@ -186,7 +163,7 @@ public class LabelTermas implements Comparable<LabelTermas> {
     }
 
     public float getTotalCost() {
-        return (float) Math.pow(this.realisedCost, 2) + fitnessWeight + shortestDistance;
+        return (float) Math.pow(this.realisedCost, 1) + fitnessWeight + shortestDistance;
     }
 
     public boolean isMarked() {

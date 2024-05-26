@@ -1,0 +1,101 @@
+    public static double distanceToStarWeightOld(Node center, Node position, double radius) {
+        Vec2 p = new Vec2(
+                Math.toRadians(position.getPoint().getLatitude()), 
+                Math.toRadians(position.getPoint().getLongitude())
+        );
+        Vec2 o = new Vec2(
+                Math.toRadians(center.getPoint().getLatitude()), 
+                Math.toRadians(center.getPoint().getLongitude())
+        );
+
+        double intRadius = radius * 0.7;
+
+        Vec2 k1 = new Vec2(0.809016994375, -0.587785252292);
+        Vec2 k2 = new Vec2(-k1.x, k1.y);
+
+        p = Vec2.sub(p, o);
+        p.x = Math.abs(p.x);
+        p.sub(Vec2.mul(k1, 2.0 * Math.max(Vec2.dot(k1, p), 0.0)));
+        p.sub(Vec2.mul(k2, 2.0 * Math.max(Vec2.dot(k2, p), 0.0)));
+
+        p.x = Math.abs(p.x);
+        p.y -= radius;
+
+        Vec2 ba = Vec2.sub(Vec2.mul(new Vec2(-k1.y, k1.x), intRadius), new Vec2(0, 1));
+        double h = Vec2.clamp(Vec2.dot(p, ba) / Vec2.dot(ba, ba), 0.0, radius);
+
+        Vec2 res = Vec2.sub(p, Vec2.mul(ba, h));
+        double distSquared = res.x * res.x + res.y * res.y;
+
+        return distSquared;
+    }
+
+    public static double distanceToStarWeight(Node center, Node position, double radius) {
+        Vec2 p = new Vec2(
+                Math.toRadians(position.getPoint().getLatitude()), 
+                Math.toRadians(position.getPoint().getLongitude())
+        );
+        Vec2 o = new Vec2(
+                Math.toRadians(center.getPoint().getLatitude()), 
+                Math.toRadians(center.getPoint().getLongitude())
+        );
+
+        // Move p relative to o
+        p.sub(o);
+
+        double intRadius = radius * 0.7;
+
+        Vec2 k1 = new Vec2(0.809016994375, -0.587785252292);
+        Vec2 k2 = new Vec2(-k1.x, k1.y);
+
+        p.x = Math.abs(p.x);
+        p.sub(Vec2.mul(k1, 2.0 * Math.max(Vec2.dot(k1, p), 0.0)));
+        p.sub(Vec2.mul(k2, 2.0 * Math.max(Vec2.dot(k2, p), 0.0)));
+
+        p.x = Math.abs(p.x);
+        p.y -= radius;
+
+        Vec2 ba = Vec2.sub(Vec2.mul(new Vec2(-k1.y, k1.x), intRadius), new Vec2(0, 1));
+        double h = Vec2.clamp(Vec2.dot(p, ba) / Vec2.dot(ba, ba), 0.0, radius);
+
+        Vec2 res = Vec2.sub(p, Vec2.mul(ba, h));
+        double distSquared = res.x * res.x + res.y * res.y;
+
+        return distSquared;
+    }
+
+    //Weight
+    public double distanceToStarWeight(Node center, Node position, double radius) {
+        Vec2 c = new Vec2(Math.toRadians(position.getPoint().getLatitude()), Math.toRadians(position.getPoint().getLongitude()));
+        final double intRadius = radius*.7;
+        Vec2 p = new Vec2(Math.toRadians(center.getPoint().getLatitude()), Math.toRadians(center.getPoint().getLongitude()));
+
+        Vec2 k1 = new Vec2(0.809016994375, -0.587785252292);
+        Vec2 k2 = new Vec2(-k1.x, k1.y);
+
+        p.x = Math.abs(p.x);
+        p.sub(Vec2.mul(k1, 2.*Math.max(Vec2.dot(k1, p), 0)));
+        p.sub(Vec2.mul(k2, 2.*Math.max(Vec2.dot(k2, p), 0)));
+
+        p.x = Math.abs(p.x);
+        p.y -= radius;
+
+        Vec2 ba = Vec2.sub(Vec2.mul(new Vec2(-k1.y, k1.x), intRadius), new Vec2(0, 1));
+        double h = Vec2.clamp(Vec2.dot(p, ba)/Vec2.dot(ba, ba), 0, radius);
+
+        Vec2 res = Vec2.sub(p, Vec2.mul(ba, h));
+        // Point resPoint = new Point((float) Math.toDegrees(res.x), (float) Math.toDegrees(res.y));
+        // return Math.pow(Point.distance(resPoint, position.getPoint()), 2);
+        return Math.pow(c.x - res.x, 2) + Math.pow(c.y - res.y, 2);
+    }
+
+    public double distanceToRectangleWeight(Node center, Node position, double radius) {
+        Vec2 c = new Vec2(Math.toRadians(position.getPoint().getLatitude()), Math.toRadians(position.getPoint().getLongitude()));
+        final double size = radius*1.414213562;
+        Vec2 p = new Vec2(Math.toRadians(center.getPoint().getLatitude()), Math.toRadians(center.getPoint().getLongitude()));
+
+        Vec2 d = new Vec2(Math.abs(p.x) - size, Math.abs(p.y) - size);
+        
+        Vec2 res = new Vec2(Math.max(d.x, 0), Math.max(d.y, 0));
+        return Math.pow(Math.sqrt(Math.pow(c.x - res.x, 2) + Math.pow(c.y - res.y, 2)) + Math.min(Math.max(d.x, d.y), 0.0),1);
+    }
