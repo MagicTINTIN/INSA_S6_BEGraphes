@@ -8,6 +8,7 @@ public class LabelTermas implements Comparable<LabelTermas> {
     private Node currentVertex;
     private Node center, destination;
     private float distanceToCenter, radius, minRadius, maxRadius;
+    private float orientation;
     private float fitnessWeight, shortestDistance;
     private boolean accessible;
     private boolean marked;
@@ -34,6 +35,7 @@ public class LabelTermas implements Comparable<LabelTermas> {
         this.radius = radius;
         this.minRadius = min;
         this.maxRadius = max;
+        this.orientation = (float) getOrientation(center.getPoint(), defaultVertex.getPoint());
         this.distanceToCenter = distanceToCenter(center, defaultVertex);
         if (this.distanceToCenter >= minRadius && this.distanceToCenter <= maxRadius) {
             this.fitnessWeight = maxRadius * (float) distanceToGeometryWeight(center, defaultVertex, (double) radius);
@@ -63,6 +65,18 @@ public class LabelTermas implements Comparable<LabelTermas> {
 
     public double distanceToCircleWeight(Node center, Node position, double radius) {
         return 0 * Math.pow(Math.abs(Point.distance(center.getPoint(), position.getPoint()) - radius), 1.);
+    }
+
+    public static double getOrientation(Point o, Point a) {
+        double latO = Math.toRadians(o.getLatitude());
+        double lonO = Math.toRadians(o.getLongitude());
+        double latA = Math.toRadians(a.getLatitude());
+        double lonA = Math.toRadians(a.getLongitude());
+
+        double distanceOA = o.distanceTo(a) / Point.EARTH_RADIUS; // Central angle
+        double initialAngle = Math.atan2(Math.sin(lonA - lonO) * Math.cos(latA),
+                                         Math.cos(latO) * Math.sin(latA) - Math.sin(latO) * Math.cos(latA) * Math.cos(lonA - lonO));
+        return initialAngle;
     }
 
     public static Point calculatePointOnCircle(Point o, Point a, double angle) {
@@ -162,8 +176,18 @@ public class LabelTermas implements Comparable<LabelTermas> {
         this.parent = newParent;
     }
 
+    // public float getTotalCost() {
+    //     return (float) Math.pow(this.realisedCost, 1) + fitnessWeight + shortestDistance;
+    // }
+
+    public float getMinCircleArcLength() {
+        float minRadius =distanceToCenter(center, destination);// (float) Math.min(distanceToCenter(center, destination), distanceToCenter);
+        float diffOrientation = (float) Math.abs((orientation - getOrientation(center.getPoint(), destination.getPoint())) % (2*Math.PI));
+        return minRadius * diffOrientation;
+    }
+
     public float getTotalCost() {
-        return (float) Math.pow(this.realisedCost, 1) + fitnessWeight + shortestDistance;
+        return (float) Math.pow(this.realisedCost, 1) + getMinCircleArcLength();
     }
 
     public boolean isMarked() {
@@ -184,6 +208,10 @@ public class LabelTermas implements Comparable<LabelTermas> {
 
     public Node getCurrentVertex() {
         return this.currentVertex;
+    }
+
+    public float getOrientation() {
+        return this.orientation;
     }
 
     @Override
