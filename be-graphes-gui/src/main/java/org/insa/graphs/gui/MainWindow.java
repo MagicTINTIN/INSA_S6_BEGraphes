@@ -51,6 +51,10 @@ import org.insa.graphs.algorithm.shortestpath.ShortestPathAlgorithm;
 import org.insa.graphs.algorithm.shortestpath.ShortestPathData;
 import org.insa.graphs.algorithm.shortestpath.ShortestPathSolution;
 import org.insa.graphs.algorithm.shortestpath.ShortestPathTextObserver;
+import org.insa.graphs.algorithm.termas.TermasAlgorithm;
+import org.insa.graphs.algorithm.termas.TermasData;
+import org.insa.graphs.algorithm.termas.TermasSolution;
+import org.insa.graphs.algorithm.termas.TermasTextObserver;
 import org.insa.graphs.algorithm.weakconnectivity.WeaklyConnectedComponentTextObserver;
 import org.insa.graphs.algorithm.weakconnectivity.WeaklyConnectedComponentsAlgorithm;
 import org.insa.graphs.algorithm.weakconnectivity.WeaklyConnectedComponentsData;
@@ -62,6 +66,7 @@ import org.insa.graphs.gui.drawing.GraphPalette;
 import org.insa.graphs.gui.drawing.components.BasicDrawing;
 import org.insa.graphs.gui.drawing.components.MapViewDrawing;
 import org.insa.graphs.gui.observers.ShortestPathGraphicObserver;
+import org.insa.graphs.gui.observers.TermasGraphicObserver;
 import org.insa.graphs.gui.observers.WeaklyConnectedComponentGraphicObserver;
 import org.insa.graphs.gui.utils.FileUtils;
 import org.insa.graphs.gui.utils.FileUtils.FolderType;
@@ -108,7 +113,7 @@ public class MainWindow extends JFrame {
 
     // Algorithm panels
     private final List<AlgorithmPanel> algoPanels = new ArrayList<>();
-    private final AlgorithmPanel wccPanel, spPanel, cpPanel, psPanel;
+    private final AlgorithmPanel wccPanel, spPanel, termasPanel, cpPanel, psPanel;
 
     // Path panel
     private final PathsPanel pathPanel;
@@ -254,6 +259,61 @@ public class MainWindow extends JFrame {
             }
         });
 
+
+        termasPanel = new AlgorithmPanel(this, TermasAlgorithm.class, "Tourner en rond, mais avec style",
+                new String[] { "Center", "Start", "MinRadius", "MaxRadius" }, true);
+        termasPanel.addStartActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                StartActionEvent evt = (StartActionEvent) e;
+                TermasData data = new TermasData(graph, evt.getNodes().get(0),
+                        evt.getNodes().get(1), evt.getArcFilter());
+
+                TermasAlgorithm termasAlgorithm = null;
+                try {
+                    termasAlgorithm = (TermasAlgorithm) AlgorithmFactory
+                            .createAlgorithm(evt.getAlgorithmClass(), data);
+                            // .createAlgorithm(evt.getA.class, data);
+                }
+                catch (Exception e1) {
+                    JOptionPane.showMessageDialog(MainWindow.this,
+                            "An error occurred while creating the specified algorithm.",
+                            "Internal error: Algorithm instantiation failure",
+                            JOptionPane.ERROR_MESSAGE);
+                    e1.printStackTrace();
+                    return;
+                }
+
+                termasPanel.setEnabled(false);
+
+                if (evt.isGraphicVisualizationEnabled()) {
+                    termasAlgorithm.addObserver(new TermasGraphicObserver(drawing));
+                }
+                if (evt.isTextualVisualizationEnabled()) {
+                    termasAlgorithm.addObserver(new TermasTextObserver(printStream));
+                }
+
+                final TermasAlgorithm copyAlgorithm = termasAlgorithm;
+                launchThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        // Run the algorithm.
+                        TermasSolution solution = copyAlgorithm.run();
+                        // Add the solution to the solution panel (but do not display
+                        // overlay).
+                        termasPanel.solutionPanel.addSolution(solution, false);
+                        // If the solution is feasible, add the path to the path panel.
+                        if (solution.isFeasible()) {
+                            pathPanel.addPath(solution.getPath());
+                        }
+                        // Show the solution panel and enable the shortest-path panel.
+                        termasPanel.solutionPanel.setVisible(true);
+                        termasPanel.setEnabled(true);
+                    }
+                });
+            }
+        });
+
         cpPanel = new AlgorithmPanel(this, CarPoolingAlgorithm.class, "Car-Pooling", new String[] {
                 "Origin Car", "Origin Pedestrian", "Destination Car", "Destination Pedestrian" },
                 true);
@@ -264,6 +324,7 @@ public class MainWindow extends JFrame {
         // add algorithm panels
         algoPanels.add(wccPanel);
         algoPanels.add(spPanel);
+        algoPanels.add(termasPanel);
         algoPanels.add(cpPanel);
         algoPanels.add(psPanel);
 
@@ -421,6 +482,9 @@ public class MainWindow extends JFrame {
         currentThread.setThread(null);
         if (spPanel.isVisible()) {
             spPanel.setEnabled(true);
+        }
+        if (termasPanel.isVisible()) {
+            termasPanel.setEnabled(true);
         }
     }
 
@@ -746,6 +810,15 @@ public class MainWindow extends JFrame {
             }
         }));
 
+        // Tourner en rond, mais avec style
+        JMenuItem termasItem = new JMenuItem("Tourner en rond, mais avec style");
+        termasItem.addActionListener(baf.createBlockingAction(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                enableAlgorithmPanel(termasPanel);
+            }
+        }));
+
         // Car pooling
         JMenuItem cpItem = new JMenuItem("Car Pooling");
         cpItem.addActionListener(baf.createBlockingAction(new ActionListener() {
@@ -766,12 +839,14 @@ public class MainWindow extends JFrame {
 
         graphLockItems.add(wccItem);
         graphLockItems.add(spItem);
+        graphLockItems.add(termasItem);
         graphLockItems.add(cpItem);
         graphLockItems.add(psItem);
 
         algoMenu.add(wccItem);
         algoMenu.addSeparator();
         algoMenu.add(spItem);
+        algoMenu.add(termasItem);
         algoMenu.add(cpItem);
         algoMenu.add(psItem);
 
