@@ -1,0 +1,74 @@
+@startuml
+
+class Graph {
+    - const String mapId
+    - const String mapName
+    - const Node nodes[]
+    - const GraphStatistics graphStatistics
+    + GraphStatistics getGraphInformation()
+}
+
+class Node {
+    - const int id
+    - const Point point
+    - const Arc successors[]
+    # addSuccessor()
+    + int getNumberOfSuccessor()
+    + bool hasSuccessors()
+    + Arc[] getSuccessors()
+}
+
+class Path {
+    - const Graph graph
+    - const Node origin
+    - const Arc arcs[]
+    + bool isEmpty()
+    + int size()
+    + bool isValid()
+    + float getLength()
+    + double getTravelTime()
+    + double getMinimumTravelTime()
+}
+
+abstract class Arc {
+    +{abstract} Node getOrigin()
+    +{abstract} Node getDestination()
+    +{abstract} float getLength()
+    + double getTravelTime(double speed)
+    + double getMinimumTravelTime()
+    +{abstract} RoadInformation getRoadInformation()
+    +{abstract} Point[] getPoints()
+}
+
+class RoadInformation {
+    - const RoadType type
+    - const  AccessRestrictions access
+    - const boolean oneway
+    - const int maxSpeed
+    - const String name
+}
+
+class ArcBackward {
+    - const Arc originalArc
+}
+
+class ArcForward {
+    - const Node origin, destination
+    - const float length
+    - const RoadInformation info
+    - const Point points[]
+}
+
+RoadInformation  --> Arc::getRoadInformation
+RoadInformation --* ArcForward::info
+Node::successor "2" -- "0..*" Arc
+Graph::nodes *-- Node
+Path::graph *-- Graph
+Path::origin *-- Node
+Path::arcs *-- "*" Arc
+
+ArcForward --|> Arc
+ArcBackward --|> Arc
+
+
+@enduml
