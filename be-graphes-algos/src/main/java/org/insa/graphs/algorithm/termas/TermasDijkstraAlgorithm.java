@@ -27,6 +27,78 @@ public class TermasDijkstraAlgorithm extends TermasAlgorithm {
         return new LabelTermas(n, c, min, max, radius);
     }
 
+    private ArrayList<Arc> dijkstraAlgo(Graph graph, LabelTermas nodeLabels[], TermasData data, int startID, Node firstDestination, int firstDestinationID) {
+        boolean isDestinationMarked = false;
+        BinaryHeap<LabelTermas> heap = new BinaryHeap<>();
+
+        for (Node node : graph.getNodes()) {
+            nodeLabels[node.getId()].reset();
+            nodeLabels[node.getId()].setDestination(firstDestination);
+        }
+
+        nodeLabels[startID].setCost(0);
+        heap.insert(nodeLabels[startID]);
+
+        while (!heap.isEmpty() && !isDestinationMarked) {
+            LabelTermas minVertex = heap.deleteMin();
+
+            nodeLabels[minVertex.getID()].mark();
+            if (minVertex.getID() == firstDestinationID) {
+                isDestinationMarked = true;
+                break;
+            }
+            Node minNode = minVertex.getCurrentVertex();
+            notifyNodeMarked(minNode);
+
+            for (Arc arc : minNode.getSuccessors()) {
+                Node successor = arc.getDestination();
+
+                if (!data.isAllowed(arc)) {
+                    continue;
+                }
+
+                LabelTermas successorLabel = nodeLabels[successor.getId()];
+
+                if (!successorLabel.isAccessible()) {
+                    continue;
+                }
+
+                if (!successorLabel.isMarked()) {
+                    //if (successorLabel.getCost() != Float.MAX_VALUE)
+                    if (successorLabel.isReached())
+                        heap.remove(successorLabel);
+                    else
+                        notifyNodeReached(successor);
+
+                    int res = successorLabel.updateCostAndParent(minVertex.getCost() + (float) data.getCost(arc),
+                             arc);
+
+                    heap.insert(successorLabel);
+                }
+            }
+        }
+
+        if (!isDestinationMarked)
+            return null;
+        ArrayList<Arc> shortestArcs = new ArrayList<>();
+        LabelTermas goingBack = nodeLabels[firstDestinationID];
+
+        while (goingBack.getParent() != null && goingBack.getParent().getOrigin().getId() != startID) {
+            shortestArcs.add(goingBack.getParent());
+            goingBack = nodeLabels[goingBack.getParent().getOrigin().getId()];
+        }
+        if (goingBack.getParent() != null) {
+            shortestArcs.add(goingBack.getParent());
+            goingBack = nodeLabels[goingBack.getParent().getOrigin().getId()];
+            if (goingBack.getParent() != null)
+                System.out.println("Chelou ça: " + goingBack.getParent().getOrigin().getId());
+            else
+                System.out.println("Pas chelou: " + goingBack.getParent());
+        }
+        Collections.reverse(shortestArcs);
+        return shortestArcs;
+    }
+
     @Override
     protected TermasSolution doRun() {
         final TermasData data = getInputData();
@@ -34,14 +106,12 @@ public class TermasDijkstraAlgorithm extends TermasAlgorithm {
         final double maxRadius = data.getMax();
         final int centerID = data.getCenter().getId();
         final int startID = data.getStart().getId();
-        boolean isDestinationMarked = false;
         TermasSolution solution = null;
 
         // initialising
         Graph graph = data.getGraph();
         final int nbNodes = graph.size();
         LabelTermas nodeLabels[] = new LabelTermas[nbNodes];
-        BinaryHeap<LabelTermas> heap = new BinaryHeap<>();
 
         System.out.println("Center : x/lon: " + data.getCenter().getPoint().getLongitude() + ", y/lat: " + data.getCenter().getPoint().getLatitude());
         System.out.println("Start : x/lon: " + data.getStart().getPoint().getLongitude() + ", y/lat: " + data.getStart().getPoint().getLatitude());
@@ -86,55 +156,34 @@ public class TermasDijkstraAlgorithm extends TermasAlgorithm {
         final int firstDestinationID = firstDestination.getId();
         final int secondDestinationID = secondDestination.getId();
 
-        for (Node node : graph.getNodes()) {
-            nodeLabels[node.getId()].setDestination(firstDestination);
-        }
-
-        heap.insert(nodeLabels[startID]);
-        nodeLabels[startID].setCost(0);
         notifyOriginProcessed(data.getStart());
 
-        while (!heap.isEmpty() && !isDestinationMarked) {
-            LabelTermas minVertex = heap.deleteMin();
-
-            nodeLabels[minVertex.getID()].mark();
-            if (minVertex.getID() == firstDestinationID) {
-                isDestinationMarked = true;
-                break;
-            }
-            Node minNode = minVertex.getCurrentVertex();
-            notifyNodeMarked(minNode);
-
-            for (Arc arc : minNode.getSuccessors()) {
-                Node successor = arc.getDestination();
-
-                if (!data.isAllowed(arc)) {
-                    continue;
-                }
-
-                LabelTermas successorLabel = nodeLabels[successor.getId()];
-
-                if (!successorLabel.isAccessible()) {
-                    continue;
-                }
-
-                if (!successorLabel.isMarked()) {
-                    if (successorLabel.getCost() != Float.MAX_VALUE)
-                        heap.remove(successorLabel);
-                    else
-                        notifyNodeReached(successor);
-
-                    int res = successorLabel.updateCostAndParent(minVertex.getCost() + (float) data.getCost(arc),
-                             arc);
-
-                    heap.insert(successorLabel);
-                }
-            }
-        }
-
-        if (!isDestinationMarked) {
+        ArrayList<Arc> shortestArcs = new ArrayList<>();
+        ArrayList<Arc> tmpArcs = dijkstraAlgo(graph, nodeLabels, data, startID, firstDestination, firstDestinationID);
+        if (tmpArcs == null) {
             solution = new TermasSolution(data, Status.INFEASIBLE);
             return solution;
+        }
+        else {
+            shortestArcs.addAll(tmpArcs);
+        }
+
+        tmpArcs = dijkstraAlgo(graph, nodeLabels, data, firstDestinationID, secondDestination, secondDestinationID);
+        if (tmpArcs == null) {
+            solution = new TermasSolution(data, Status.INFEASIBLE);
+            return solution;
+        }
+        else {
+            shortestArcs.addAll(tmpArcs);
+        }
+
+        tmpArcs = dijkstraAlgo(graph, nodeLabels, data, secondDestinationID, data.getStart(), startID);
+        if (tmpArcs == null) {
+            solution = new TermasSolution(data, Status.INFEASIBLE);
+            return solution;
+        }
+        else {
+            shortestArcs.addAll(tmpArcs);
         }
 
         // for (Node node : graph.getNodes()) {
@@ -142,14 +191,11 @@ public class TermasDijkstraAlgorithm extends TermasAlgorithm {
         // }
 
         notifyDestinationReached(firstDestination);
-        ArrayList<Arc> shortestArcs = new ArrayList<>();
-        LabelTermas goingBack = nodeLabels[firstDestinationID];
-        // System.out.println("Finished, going back");
-        while (goingBack.getParent() != null) {
-            shortestArcs.add(goingBack.getParent());
-            goingBack = nodeLabels[goingBack.getParent().getOrigin().getId()];
-        }
-        Collections.reverse(shortestArcs);
+        
+        // if (goingBack.getParent() != null) {
+        //     shortestArcs.add(goingBack.getParent());
+        //     goingBack = nodeLabels[goingBack.getParent().getOrigin().getId()];
+        // }
         solution = new TermasSolution(data, Status.OPTIMAL, new Path(graph, shortestArcs));
         return solution;
     }
