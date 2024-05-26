@@ -176,19 +176,19 @@ public class LabelTermas implements Comparable<LabelTermas> {
         this.parent = newParent;
     }
 
-    // public float getTotalCost() {
-    //     return (float) Math.pow(this.realisedCost, 1) + fitnessWeight + shortestDistance;
+    public float getTotalCost() {
+        return (float) Math.pow(this.realisedCost, 1) + fitnessWeight + shortestDistance;
+    }
+
+    // public float getMinCircleArcLength() {
+    //     float minRadius =distanceToCenter(center, destination);// (float) Math.min(distanceToCenter(center, destination), distanceToCenter);
+    //     float diffOrientation = (float) Math.abs((orientation - getOrientation(center.getPoint(), destination.getPoint())) % (2*Math.PI));
+    //     return minRadius * diffOrientation;
     // }
 
-    public float getMinCircleArcLength() {
-        float minRadius =distanceToCenter(center, destination);// (float) Math.min(distanceToCenter(center, destination), distanceToCenter);
-        float diffOrientation = (float) Math.abs((orientation - getOrientation(center.getPoint(), destination.getPoint())) % (2*Math.PI));
-        return minRadius * diffOrientation;
-    }
-
-    public float getTotalCost() {
-        return (float) Math.pow(this.realisedCost, 1) + getMinCircleArcLength();
-    }
+    // public float getTotalCost() {
+    //     return (float) Math.pow(this.realisedCost, 1) + getMinCircleArcLength();
+    // }
 
     public boolean isMarked() {
         return this.marked;

@@ -16,8 +16,6 @@ import org.insa.graphs.model.Path;
 import org.insa.graphs.model.Point;
 
 public class TermasDijkstraAlgorithm extends TermasAlgorithm {
-    private float minRadius;
-    private float maxRadius;
 
     public TermasDijkstraAlgorithm(TermasData data) {
         super(data);
@@ -27,7 +25,8 @@ public class TermasDijkstraAlgorithm extends TermasAlgorithm {
         return new LabelTermas(n, c, min, max, radius);
     }
 
-    private ArrayList<Arc> dijkstraAlgo(Graph graph, LabelTermas nodeLabels[], TermasData data, int startID, Node firstDestination, int firstDestinationID) {
+    private ArrayList<Arc> dijkstraAlgo(Graph graph, LabelTermas nodeLabels[], TermasData data, int startID,
+            Node firstDestination, int firstDestinationID) {
         boolean isDestinationMarked = false;
         BinaryHeap<LabelTermas> heap = new BinaryHeap<>();
 
@@ -64,14 +63,14 @@ public class TermasDijkstraAlgorithm extends TermasAlgorithm {
                 }
 
                 if (!successorLabel.isMarked()) {
-                    //if (successorLabel.getCost() != Float.MAX_VALUE)
+                    // if (successorLabel.getCost() != Float.MAX_VALUE)
                     if (successorLabel.isReached())
                         heap.remove(successorLabel);
                     else
                         notifyNodeReached(successor);
 
                     int res = successorLabel.updateCostAndParent(minVertex.getCost() + (float) data.getCost(arc),
-                             arc);
+                            arc);
 
                     heap.insert(successorLabel);
                 }
@@ -90,10 +89,6 @@ public class TermasDijkstraAlgorithm extends TermasAlgorithm {
         if (goingBack.getParent() != null) {
             shortestArcs.add(goingBack.getParent());
             goingBack = nodeLabels[goingBack.getParent().getOrigin().getId()];
-            if (goingBack.getParent() != null)
-                System.out.println("Chelou ça: " + goingBack.getParent().getOrigin().getId());
-            else
-                System.out.println("Pas chelou: " + goingBack.getParent());
         }
         Collections.reverse(shortestArcs);
         return shortestArcs;
@@ -101,6 +96,7 @@ public class TermasDijkstraAlgorithm extends TermasAlgorithm {
 
     @Override
     protected TermasSolution doRun() {
+        final int numberOfSteps = 7;
         final TermasData data = getInputData();
         final double minRadius = data.getMin();
         final double maxRadius = data.getMax();
@@ -113,88 +109,99 @@ public class TermasDijkstraAlgorithm extends TermasAlgorithm {
         final int nbNodes = graph.size();
         LabelTermas nodeLabels[] = new LabelTermas[nbNodes];
 
-        System.out.println("Center : x/lon: " + data.getCenter().getPoint().getLongitude() + ", y/lat: " + data.getCenter().getPoint().getLatitude());
-        System.out.println("Start : x/lon: " + data.getStart().getPoint().getLongitude() + ", y/lat: " + data.getStart().getPoint().getLatitude());
+        System.out.println("Center : x/lon: " + data.getCenter().getPoint().getLongitude() + ", y/lat: "
+                + data.getCenter().getPoint().getLatitude());
+        System.out.println("Start : x/lon: " + data.getStart().getPoint().getLongitude() + ", y/lat: "
+                + data.getStart().getPoint().getLatitude());
 
-        Point firstIdealPosition = LabelTermas.calculatePointOnCircle(data.getCenter().getPoint(), data.getStart().getPoint(), 2*Math.PI/3);
-        System.out.println("1st Ideal : x/lon: " + firstIdealPosition.getLongitude() + ", y/lat: " + firstIdealPosition.getLatitude());
-        Node firstDestination = null;
-        float firstFitness = Float.MAX_VALUE;
-
-        Point secondIdealPosition = LabelTermas.calculatePointOnCircle(data.getCenter().getPoint(), data.getStart().getPoint(), -2*Math.PI/3);
-        System.out.println("2nd Ideal : x/lon: " + secondIdealPosition.getLongitude() + ", y/lat: " + secondIdealPosition.getLatitude());
-        Node secondDestination = null;
-        float secondFitness = Float.MAX_VALUE;
+        Point idealPositions[] = new Point[numberOfSteps - 1];
+        float fitnesses[] = new float[numberOfSteps - 1];
+        Node destinations[] = new Node[numberOfSteps - 1];
+        for (int i = 1; i < numberOfSteps; i++) {
+            idealPositions[i - 1] = LabelTermas.calculatePointOnCircle(data.getCenter().getPoint(),
+                    data.getStart().getPoint(), 2 * i * Math.PI / numberOfSteps);
+            System.out.println(i + " Ideal : x/lon: " + idealPositions[i - 1].getLongitude() + ", y/lat: "
+                    + idealPositions[i - 1].getLatitude());
+            destinations[i - 1] = null;
+            fitnesses[i - 1] = Float.MAX_VALUE;
+        }
 
         for (Node node : graph.getNodes()) {
-            nodeLabels[node.getId()] = createLabel(node, data.getCenter(), (float) data.getMin(), (float) data.getMax(), (float) data.getRadius());
+            nodeLabels[node.getId()] = createLabel(node, data.getCenter(), (float) data.getMin(), (float) data.getMax(),
+                    (float) data.getRadius());
             if (nodeLabels[node.getId()].isAccessible()) {
-                float dTo1 = (float) Point.distance(node.getPoint(), firstIdealPosition);
-                float dTo2 = (float) Point.distance(node.getPoint(), secondIdealPosition);
-                if (dTo1 < firstFitness) {
-                    firstDestination = node;
-                    firstFitness = dTo1;
-                }
-                if (dTo2 < secondFitness) {
-                    secondDestination = node;
-                    secondFitness = dTo2;
+                for (int i = 1; i < numberOfSteps; i++) {
+                    float dTo = (float) Point.distance(node.getPoint(), idealPositions[i - 1]);
+                    if (dTo < fitnesses[i - 1]) {
+                        destinations[i - 1] = node;
+                        fitnesses[i - 1] = dTo;
+                    }
                 }
             }
         }
 
-
-        if (firstDestination == null || firstFitness == Float.MAX_VALUE || secondDestination == null || secondFitness == Float.MAX_VALUE
-            || firstDestination.getId() == data.getStart().getId()
-            || secondDestination.getId() == firstDestination.getId()
-            || data.getStart().getId() == secondDestination.getId()) {
-            solution = new TermasSolution(data, Status.INFEASIBLE);
-            return solution;
+        // checking that every passby exists
+        for (int i = 1; i < numberOfSteps; i++) {
+            if (destinations[i - 1] == null || fitnesses[i - 1] == Float.MAX_VALUE) {
+                solution = new TermasSolution(data, Status.INFEASIBLE);
+                return solution;
+            }
+            System.out.println(i + " Real : x/lon: " + destinations[i - 1].getPoint().getLongitude() + ", y/lat: "
+                    + destinations[i - 1].getPoint().getLatitude());
         }
-
-        System.out.println("1st Real : x/lon: " + firstDestination.getPoint().getLongitude() + ", y/lat: " + firstDestination.getPoint().getLatitude());
-        System.out.println("2nd Real : x/lon: " + secondDestination.getPoint().getLongitude() + ", y/lat: " + secondDestination.getPoint().getLatitude());
-        final int firstDestinationID = firstDestination.getId();
-        final int secondDestinationID = secondDestination.getId();
 
         notifyOriginProcessed(data.getStart());
 
         ArrayList<Arc> shortestArcs = new ArrayList<>();
-        ArrayList<Arc> tmpArcs = dijkstraAlgo(graph, nodeLabels, data, startID, firstDestination, firstDestinationID);
-        if (tmpArcs == null) {
-            solution = new TermasSolution(data, Status.INFEASIBLE);
-            return solution;
-        }
-        else {
-            shortestArcs.addAll(tmpArcs);
-        }
 
-        tmpArcs = dijkstraAlgo(graph, nodeLabels, data, firstDestinationID, secondDestination, secondDestinationID);
-        if (tmpArcs == null) {
-            solution = new TermasSolution(data, Status.INFEASIBLE);
-            return solution;
+        for (int step = 0; step < numberOfSteps; step++) {
+            ArrayList<Arc> tmpArcs;
+            if (step == 0) {
+                if (startID == destinations[step].getId())
+                    continue;
+                tmpArcs = dijkstraAlgo(graph, nodeLabels, data, startID, destinations[step], destinations[step].getId());
+                if (tmpArcs == null) {
+                    System.err.println("Failed at step " + step);
+                    solution = new TermasSolution(data, Status.INFEASIBLE);
+                    return solution;
+                } else {
+                    shortestArcs.addAll(tmpArcs);
+                }
+            }
+            else if (step == (numberOfSteps - 1)) {
+                if (startID == destinations[step - 1].getId())
+                    continue;
+                tmpArcs = dijkstraAlgo(graph, nodeLabels, data, destinations[step - 1].getId(), data.getStart(), startID);
+                if (tmpArcs == null) {
+                    System.err.println("Failed at step " + step);
+                    solution = new TermasSolution(data, Status.INFEASIBLE);
+                    return solution;
+                } else {
+                    shortestArcs.addAll(tmpArcs);
+                }
+            }
+            else {
+                if (destinations[step -1].getId() == destinations[step].getId())
+                    continue;
+                tmpArcs = dijkstraAlgo(graph, nodeLabels, data, destinations[step - 1].getId(), destinations[step], destinations[step].getId());
+                if (tmpArcs == null) {
+                    System.err.println("Failed at step " + step);
+                    solution = new TermasSolution(data, Status.INFEASIBLE);
+                    return solution;
+                } else {
+                    shortestArcs.addAll(tmpArcs);
+                }
+            }
         }
-        else {
-            shortestArcs.addAll(tmpArcs);
-        }
-
-        tmpArcs = dijkstraAlgo(graph, nodeLabels, data, secondDestinationID, data.getStart(), startID);
-        if (tmpArcs == null) {
-            solution = new TermasSolution(data, Status.INFEASIBLE);
-            return solution;
-        }
-        else {
-            shortestArcs.addAll(tmpArcs);
-        }
-
         // for (Node node : graph.getNodes()) {
-        //     nodeLabels[node.getId()].setDestination(secondDestination);
+        // nodeLabels[node.getId()].setDestination(secondDestination);
         // }
 
-        notifyDestinationReached(firstDestination);
-        
+        notifyDestinationReached(data.getStart());
+
         // if (goingBack.getParent() != null) {
-        //     shortestArcs.add(goingBack.getParent());
-        //     goingBack = nodeLabels[goingBack.getParent().getOrigin().getId()];
+        // shortestArcs.add(goingBack.getParent());
+        // goingBack = nodeLabels[goingBack.getParent().getOrigin().getId()];
         // }
         solution = new TermasSolution(data, Status.OPTIMAL, new Path(graph, shortestArcs));
         return solution;
