@@ -5,7 +5,7 @@ import org.insa.graphs.model.Node;
 import org.insa.graphs.model.Point;
 
 public class LabelStar extends Label {
-    private static final float coefTemps = 1.2f;
+    private static final float coefTemps = 2.2f;
     private static final float coefVitesseArc = .5f;
     private float shortestDistance;
     
