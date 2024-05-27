@@ -29,17 +29,27 @@ public class DijkstraAlgorithm extends ShortestPathAlgorithm {
         final ShortestPathData data = getInputData();
         final int originID = data.getOrigin().getId();
         final int destinationID = data.getDestination().getId();
-        boolean isDestinationMarked = false;
+        Graph graph = data.getGraph();
         ShortestPathSolution solution = null;
 
-        // initialising
-        Graph graph = data.getGraph();
+        if (data.getOrigin().getId() == data.getDestination().getId()) {
+            solution = new ShortestPathSolution(data, Status.INFEASIBLE);
+            return solution;
+            // if you accept solutions with 0 arcs
+            // ArrayList<Arc> shortestArcs = new ArrayList<>();
+            // solution = new ShortestPathSolution(data, Status.OPTIMAL, new Path(graph, shortestArcs));
+            // return solution;
+        }
+
+        boolean isDestinationMarked = false;
+
         int maxSpeed = data.getGraph().getGraphInformation().getMaximumSpeed();
         if (maxSpeed == GraphStatistics.NO_MAXIMUM_SPEED || true)
-            maxSpeed = 20;//142;
+            maxSpeed = 142;
         final int nbNodes = graph.size();
         Label nodeLabels[] = new Label[nbNodes];
         BinaryHeap<Label> heap = new BinaryHeap<>();
+        // comment to only load the used parts of the map (usefull for France)
         // for (Node node : graph.getNodes()) {
         //     nodeLabels[node.getId()] = createLabel(node, data.getDestination(), data.getMode(), maxSpeed);
         // }

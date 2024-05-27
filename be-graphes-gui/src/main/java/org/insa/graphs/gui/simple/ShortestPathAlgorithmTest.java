@@ -413,15 +413,6 @@ public class ShortestPathAlgorithmTest {
         }
 
         System.out.println("--- END OF THE TESTS ---");
-        // Create the drawing:
-        // final Drawing drawing = createDrawing();
-
-        // TODO: Create a PathReader.
-        final PathReader pathReader = null;
-
-        // TODO: Read the path.
-        final Path path = null;
-
     }
 
 }
