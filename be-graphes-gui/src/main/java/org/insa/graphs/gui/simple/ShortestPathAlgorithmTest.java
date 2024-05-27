@@ -38,8 +38,8 @@ import java.text.Format;
 
 public class ShortestPathAlgorithmTest {
 
-    protected static String globalAll = "map,feasibleBellman,lengthBellman,timeBellman,solvingTimeBellman,feasibleDijkstra,lengthDijkstra,timeDijkstra,solvingTimeDijkstra,feasibleAStar,lengthAStar,timeAStar,solvingTimeAStar,mode,valid\n";
-    protected static String globalDijastar = "map,feasibleDijkstra,lengthDijkstra,timeDijkstra,solvingTimeDijkstra,feasibleAStar,lengthAStar,timeAStar,solvingTimeAStar,mode,valid\n";
+    protected static String globalAll = "map,totalNodes,feasibleBellman,lengthBellman,timeBellman,solvingTimeBellman,feasibleDijkstra,lengthDijkstra,timeDijkstra,solvingTimeDijkstra,feasibleAStar,lengthAStar,timeAStar,solvingTimeAStar,mode,arcs,valid\n";
+    protected static String globalDijastar = "map,totalNodes,feasibleDijkstra,lengthDijkstra,timeDijkstra,solvingTimeDijkstra,feasibleAStar,lengthAStar,timeAStar,solvingTimeAStar,mode,arcs,valid\n";
 
     private static boolean identicalPaths(Path p1, Path p2) {
         if (p1 == null && p2 == null)
@@ -173,12 +173,18 @@ public class ShortestPathAlgorithmTest {
         if (astarSolution.isFeasible())
             returnStrVal += "1," + astarSolution.getPath().getLength() + ","
                     + astarSolution.getPath().getMinimumTravelTime() + ","
-                    + astarSolution.getSolvingTime().toNanos() + "," + road;
+                    + astarSolution.getSolvingTime().toNanos() + "," + road + ",";
         else
             returnStrVal += "0,-1,-1,"
-                    + astarSolution.getSolvingTime().toNanos() + "," + road;
+                    + astarSolution.getSolvingTime().toNanos() + "," + road + ",";
         if (silent <= 0)
             System.out.println("- A*: solved in " + astarSolution.getSolvingTime().toNanos() + "ns");
+        
+        if (dijkstraSolution.isFeasible() && dijkstraSolution.getPath() != null && dijkstraSolution.getPath().getArcs() != null)
+            returnStrVal += ((int)dijkstraSolution.getPath().getArcs().size()) + ",";
+        else
+            returnStrVal += "0,";
+        
         globalDijastar += returnStrVal;
         return new StringAndRes(dijkstraSolution, returnStrVal,
                 identicalPaths(dijkstraSolution.getPath(), astarSolution.getPath()),
@@ -196,10 +202,10 @@ public class ShortestPathAlgorithmTest {
             BufferedWriter writer = new BufferedWriter(new FileWriter(outputResNameFile, true));
             if (all)
                 writer.append(
-                        "map,feasibleBellman,lengthBellman,timeBellman,solvingTimeBellman,feasibleDijkstra,lengthDijkstra,timeDijkstra,solvingTimeDijkstra,feasibleAStar,lengthAStar,timeAStar,solvingTimeAStar,mode,valid\n");
+                        "map,totalNodes,feasibleBellman,lengthBellman,timeBellman,solvingTimeBellman,feasibleDijkstra,lengthDijkstra,timeDijkstra,solvingTimeDijkstra,feasibleAStar,lengthAStar,timeAStar,solvingTimeAStar,mode,arcs,valid\n");
             else
                 writer.append(
-                        "map,feasibleDijkstra,lengthDijkstra,timeDijkstra,solvingTimeDijkstra,feasibleAStar,lengthAStar,timeAStar,solvingTimeAStar,mode,valid\n");
+                        "map,totalNodes,feasibleDijkstra,lengthDijkstra,timeDijkstra,solvingTimeDijkstra,feasibleAStar,lengthAStar,timeAStar,solvingTimeAStar,mode,arcs,valid\n");
 
             writer.close();
         } catch (Exception e) {
@@ -219,9 +225,9 @@ public class ShortestPathAlgorithmTest {
                 System.out.println(
                         testName + ": TEST[" + i + "/" + numberOfTests + "]: " + originIndex + " -> "
                                 + destinationIndex);
-            globalDijastar += testName + ",";
+            globalDijastar += testName + "," + numberOfNodes + ",";
             if (all)
-                globalAll += testName + ",";
+                globalAll += testName + "," + numberOfNodes + ",";
             StringAndRes res;
             if (all)
                 res = testAll(originIndex, destinationIndex, mode, graph, silent);
@@ -231,11 +237,11 @@ public class ShortestPathAlgorithmTest {
             if (res.identic)
                 numberOfIdentics++;
 
-            String validStr = ",1\n";
+            String validStr = "1\n";
             if (res.valid)
                 numberOfSuccesses++;
             else {
-                validStr = ",0\n";
+                validStr = "0\n";
                 System.err.println("INVALID SOLUTION : " + testName + "(" + mode + ") => " + originIndex + " -> "
                         + destinationIndex);
             }
@@ -245,11 +251,11 @@ public class ShortestPathAlgorithmTest {
                 globalAll += validStr;
             try {
                 BufferedWriter writer = new BufferedWriter(new FileWriter(outputResNameFile, true));
-                writer.append(testName + "," + res.string + validStr);
+                writer.append(testName + "," + numberOfNodes + "," + res.string + validStr);
                 writer.close();
             } catch (Exception e) {
                 System.err.println("ERROR WITH FILE WRITING!");
-                System.out.println(testName + "," + res.string + validStr);
+                System.out.println(testName + "," + numberOfNodes + "," + res.string + validStr);
             }
         }
         if (silent <= 3)
@@ -323,7 +329,7 @@ public class ShortestPathAlgorithmTest {
         Graph hautegaronneGraph = hautegaronneGraphReader.read();
         hautegaronneGraphReader.close();
         execTests(hautegaronneGraph, 130, "hg", true, false, silence);
-        execTests(hautegaronneGraph, 20, "hg", false, false, silence);
+        execTests(hautegaronneGraph, 35, "hg", false, false, silence);
         hautegaronneGraph = null;
 
         System.out.println("\n\nLoading map...");
@@ -331,9 +337,30 @@ public class ShortestPathAlgorithmTest {
                 new DataInputStream(new BufferedInputStream(new FileInputStream(midipyreneesMapName))));
         Graph midipyreneesGraph = midipyreneesGraphReader.read();
         midipyreneesGraphReader.close();
-        execTests(midipyreneesGraph, 60, "mp", true, false, silence);
-        execTests(midipyreneesGraph, 10, "mp", false, false, silence);
+        execTests(midipyreneesGraph, 90, "mp", true, false, silence);
+        execTests(midipyreneesGraph, 20, "mp", false, false, silence);
         midipyreneesGraph = null;
+
+
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter("save1" + outputResNameFileAll, true));
+            writer.append(globalAll);
+
+            writer.close();
+        } catch (Exception e) {
+            System.err.println("ERROR WITH FILE WRITING!");
+            System.out.println(globalAll);
+        }
+
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter("save1" + outputResNameFileDijastar, true));
+            writer.append(globalDijastar);
+
+            writer.close();
+        } catch (Exception e) {
+            System.err.println("ERROR WITH FILE WRITING!");
+            System.out.println(globalDijastar);
+        }
 
         System.out.println("\n\nLoading map...");
         final GraphReader franceGraphReader = new BinaryGraphReader(
@@ -341,6 +368,28 @@ public class ShortestPathAlgorithmTest {
         Graph franceGraph = franceGraphReader.read();
         franceGraphReader.close();
         execTests(franceGraph, 30, "fr", true, false, silence);
+
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter("save2" + outputResNameFileAll, true));
+            writer.append(globalAll);
+
+            writer.close();
+        } catch (Exception e) {
+            System.err.println("ERROR WITH FILE WRITING!");
+            System.out.println(globalAll);
+        }
+
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter("save2" + outputResNameFileDijastar, true));
+            writer.append(globalDijastar);
+
+            writer.close();
+        } catch (Exception e) {
+            System.err.println("ERROR WITH FILE WRITING!");
+            System.out.println(globalDijastar);
+        }
+
+        execTests(franceGraph, 2, "fr", false, false, silence);
         franceGraph = null;
 
         try {
