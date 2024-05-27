@@ -38,6 +38,59 @@ import java.text.Format;
 
 public class ShortestPathAlgorithmTest {
 
+    private static boolean identicalPaths(Path p1, Path p2) {
+        if (p1 == null && p2 == null)
+            return true;
+        else if ((p1 == null && p2 != null) || (p1 != null && p2 == null) || p1.getArcs().size() != p2.getArcs().size())
+            return false;
+        for (int i = 0; i < p1.getArcs().size(); i++) {
+            if (p1.getArcs().get(i).getDestination().getId() != p2.getArcs().get(i).getDestination().getId()) {
+                System.out.println("Difference path: " + p1.getArcs().get(i).getDestination().getId() + ", "
+                        + p2.getArcs().get(i).getDestination().getId());
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean sameResults(int mode, ShortestPathSolution s1, ShortestPathSolution s2, String note) {
+        if (s1.getPath() == null && s2.getPath() == null)
+            return true;
+        else if ((s1.getPath() == null && s2.getPath() != null) || (s1.getPath() != null && s2.getPath() == null)) {
+            if (note != null)
+                System.err.println(note + " existance !");
+            return false;
+        }
+        if (mode < 3) {
+            if (note != null && s1.getPath().getLength() != s2.getPath().getLength())
+                System.err.println(note + " length !");
+            return s1.getPath().getLength() == s2.getPath().getLength();
+        } else {
+            if (note != null && s1.getPath().getMinimumTravelTime() != s2.getPath().getMinimumTravelTime())
+                System.err.println(note + " time !");
+            return s1.getPath().getMinimumTravelTime() == s2.getPath().getMinimumTravelTime();
+        }
+    }
+
+    private static boolean sameResults(int mode, ShortestPathSolution s1, ShortestPathSolution s2) {
+        return sameResults(mode, s1, s2, null);
+    }
+
+
+    public static class StringAndRes {
+        public ShortestPathSolution solution;
+        public String string;
+        public boolean identic;
+        public boolean valid;
+
+        public StringAndRes(ShortestPathSolution sol, String s, boolean i, boolean v) {
+            this.solution = sol;
+            this.string = s;
+            this.identic = i;
+            this.valid = v;
+        }
+    }
+
     /**
      * Create a new Drawing inside a JFrame an return it.
      * 
@@ -62,8 +115,8 @@ public class ShortestPathAlgorithmTest {
         return basicDrawing;
     }
 
-    public static String testAll(int origin, int destination, int road, Graph graph) {
-        String returnVal = "";
+    public static StringAndRes testAll(int origin, int destination, int road, Graph graph, int silent) {
+        String returnStrVal = "";
         Node originNode = graph.getNodes().get(origin);// new Node(origin, null);
         Node destinationNode = graph.getNodes().get(destination);// new Node(destination, );
         List<ArcInspector> listInspector = new ArcInspectorFactory().getAllFilters();
@@ -71,50 +124,76 @@ public class ShortestPathAlgorithmTest {
         ShortestPathData data = new ShortestPathData(graph, originNode, destinationNode, aInspector);
 
         BellmanFordAlgorithm bellmanford = new BellmanFordAlgorithm(data);
-        DijkstraAlgorithm dijkstra = new DijkstraAlgorithm(data);
-        AStarAlgorithm astar = new AStarAlgorithm(data);
 
         ShortestPathSolution bellmanfordSolution = bellmanford.run();
         if (bellmanfordSolution.isFeasible())
-            returnVal += "1," + bellmanfordSolution.getPath().getLength() + ","
+            returnStrVal += "1," + bellmanfordSolution.getPath().getLength() + ","
                     + bellmanfordSolution.getPath().getMinimumTravelTime() + ","
                     + bellmanfordSolution.getSolvingTime().toMillis() + ",";
         else
-            returnVal += "0,-1,-1,"
+            returnStrVal += "0,-1,-1,"
                     + bellmanfordSolution.getSolvingTime().toMillis() + ",";
-        System.out.println("- Bellman-Ford: solved in " + bellmanfordSolution.getSolvingTime().toMillis() + "ms");
+        if (silent <= 0)
+            System.out.println("- Bellman-Ford: solved in " + bellmanfordSolution.getSolvingTime().toMillis() + "ms");
+
+        StringAndRes res = testDijAstar(origin, destination, road, graph, silent);
+        return new StringAndRes(bellmanfordSolution, returnStrVal + res.string,
+                res.identic && identicalPaths(bellmanfordSolution.getPath(), res.solution.getPath()),
+                res.valid && sameResults(road, bellmanfordSolution, res.solution, "ERROR belldij"));
+    }
+
+    public static StringAndRes testDijAstar(int origin, int destination, int road, Graph graph, int silent) {
+        String returnStrVal = "";
+        Node originNode = graph.getNodes().get(origin);// new Node(origin, null);
+        Node destinationNode = graph.getNodes().get(destination);// new Node(destination, );
+        List<ArcInspector> listInspector = new ArcInspectorFactory().getAllFilters();
+        ArcInspector aInspector = listInspector.get(road);
+        ShortestPathData data = new ShortestPathData(graph, originNode, destinationNode, aInspector);
+
+        DijkstraAlgorithm dijkstra = new DijkstraAlgorithm(data);
+        AStarAlgorithm astar = new AStarAlgorithm(data);
 
         ShortestPathSolution dijkstraSolution = dijkstra.run();
         if (dijkstraSolution.isFeasible())
-            returnVal += "1," + dijkstraSolution.getPath().getLength() + ","
+            returnStrVal += "1," + dijkstraSolution.getPath().getLength() + ","
                     + dijkstraSolution.getPath().getMinimumTravelTime() + ","
                     + dijkstraSolution.getSolvingTime().toMillis() + ",";
         else
-            returnVal += "0,-1,-1,"
+            returnStrVal += "0,-1,-1,"
                     + dijkstraSolution.getSolvingTime().toMillis() + ",";
-        System.out.println("- Dijkstra: solved in " + dijkstraSolution.getSolvingTime().toMillis() + "ms");
+        if (silent <= 0)
+            System.out.println("- Dijkstra: solved in " + dijkstraSolution.getSolvingTime().toMillis() + "ms");
 
         ShortestPathSolution astarSolution = astar.run();
         if (astarSolution.isFeasible())
-            returnVal += "1," + astarSolution.getPath().getLength() + ","
+            returnStrVal += "1," + astarSolution.getPath().getLength() + ","
                     + astarSolution.getPath().getMinimumTravelTime() + ","
-                    + astarSolution.getSolvingTime().toMillis() + "\n";
+                    + astarSolution.getSolvingTime().toMillis() + "," + road + "\n";
         else
-            returnVal += "0,-1,-1,"
-                    + astarSolution.getSolvingTime().toMillis() + "\n";
-        System.out.println("- A*: solved in " + astarSolution.getSolvingTime().toMillis() + "ms");
-        return returnVal;
+            returnStrVal += "0,-1,-1,"
+                    + astarSolution.getSolvingTime().toMillis() + "," + road + "\n";
+        if (silent <= 0)
+            System.out.println("- A*: solved in " + astarSolution.getSolvingTime().toMillis() + "ms");
+        return new StringAndRes(dijkstraSolution, returnStrVal,
+                identicalPaths(dijkstraSolution.getPath(), astarSolution.getPath()),
+                sameResults(road, dijkstraSolution, astarSolution, "ERROR dijastar"));
     }
 
-    public static void execTests(Graph graph, int numberOfTests, String testName, Boolean all) {
+    public static void execTests(Graph graph, int numberOfTests, String testName, boolean shortest, boolean all,
+            int silent) {
+        int mode = 0;
+        if (!shortest)
+            mode = 3;
         Format formatter = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
         String outputResNameFile = "test" + testName + "_" + formatter.format(new Date()) + ".csv";
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(outputResNameFile, true));
             if (all)
-                writer.append("feasibleBellman,lengthBellman,timeBellman,solvingTimeBellman,feasibleDijkstra,lengthDijkstra,timeDijkstra,solvingTimeDijkstra,feasibleAStar,lengthAStar,timeAStar,solvingTimeAStar\n");
+                writer.append(
+                        "feasibleBellman,lengthBellman,timeBellman,solvingTimeBellman,feasibleDijkstra,lengthDijkstra,timeDijkstra,solvingTimeDijkstra,feasibleAStar,lengthAStar,timeAStar,solvingTimeAStar,mode\n");
             else
-                writer.append("feasibleDijkstra,lengthDijkstra,timeDijkstra,solvingTimeDijkstra,feasibleAStar,lengthAStar,timeAStar,solvingTimeAStar\n");
+                writer.append(
+                        "feasibleDijkstra,lengthDijkstra,timeDijkstra,solvingTimeDijkstra,feasibleAStar,lengthAStar,timeAStar,solvingTimeAStar,mode\n");
 
             writer.close();
         } catch (Exception e) {
@@ -122,25 +201,44 @@ public class ShortestPathAlgorithmTest {
         }
 
         int numberOfNodes = graph.getNodes().size();
+        int numberOfSuccesses = 0;
+        int numberOfIdentics = 0;
         for (int i = 0; i < numberOfTests; i++) {
-            int originIndex = ThreadLocalRandom.current().nextInt(0, numberOfNodes + 1);
-            int destinationIndex = ThreadLocalRandom.current().nextInt(0, numberOfNodes + 1);
+            int originIndex = ThreadLocalRandom.current().nextInt(0, numberOfNodes);
+            int destinationIndex = ThreadLocalRandom.current().nextInt(0, numberOfNodes);
             while (destinationIndex == originIndex) {
-                destinationIndex = ThreadLocalRandom.current().nextInt(0, numberOfNodes + 1);
+                destinationIndex = ThreadLocalRandom.current().nextInt(0, numberOfNodes);
             }
-            System.out.println(testName + ": TEST[" + i + "/" + numberOfTests + "]: " + originIndex + " -> " + destinationIndex);
+            if (silent <= 2)
+                System.out.println(
+                        testName + ": TEST[" + i + "/" + numberOfTests + "]: " + originIndex + " -> "
+                                + destinationIndex);
+            StringAndRes res;
+            if (all)
+                res = testAll(originIndex, destinationIndex, mode, graph, silent);
+            else
+                res = testDijAstar(originIndex, destinationIndex, mode, graph, silent);
 
-            String res = testAll(originIndex, destinationIndex, 0, graph);
+            if (res.identic)
+                numberOfIdentics++;
+            if (res.valid)
+                numberOfSuccesses++;
+            else
+                System.err.println("INVALID SOLUTION : " + testName + "(" + mode + ") => " + originIndex + " -> " + destinationIndex);
             try {
                 BufferedWriter writer = new BufferedWriter(new FileWriter(outputResNameFile, true));
-                writer.append(res);
+                writer.append(res.string);
 
                 writer.close();
             } catch (Exception e) {
                 System.err.println("ERROR WITH FILE WRITING!");
-                System.out.println(res);
+                System.out.println(res.string);
             }
         }
+        if (silent <= 3)
+            System.out.println(testName + ": Valid results > " + numberOfSuccesses + "/" + numberOfTests + "\n");
+        if (silent <= 1)
+            System.out.println(testName + ": Identic results > " + numberOfIdentics + "/" + numberOfTests + "\n");
     }
 
     public static void main(String[] args) throws Exception {
@@ -148,45 +246,85 @@ public class ShortestPathAlgorithmTest {
         // Visit these directory to see the list of available files on Commetud.
         // final String mapName = "/mnt/commetud/3eme Annee
         // MIC/Graphes-et-Algorithmes/Maps/insa.mapgr";
-        
-        // final String carreMapName = "/home/utilisateur/INSA/S6/graphes/INSA_S6_BEGraphes/Maps/carre.mapgr";
-        // final String insaMapName = "/home/utilisateur/INSA/S6/graphes/INSA_S6_BEGraphes/Maps/insa.mapgr";
-        // final String toulouseMapName = "/home/utilisateur/INSA/S6/graphes/INSA_S6_BEGraphes/Maps/toulouse.mapgr";
-        // final String midipyreneesMapName = "/home/utilisateur/INSA/S6/graphes/INSA_S6_BEGraphes/Maps/toulouse.mapgr";
-        
+
+        // final String carreMapName =
+        // "/home/utilisateur/INSA/S6/graphes/INSA_S6_BEGraphes/Maps/carre.mapgr";
+        // final String insaMapName =
+        // "/home/utilisateur/INSA/S6/graphes/INSA_S6_BEGraphes/Maps/insa.mapgr";
+        // final String toulouseMapName =
+        // "/home/utilisateur/INSA/S6/graphes/INSA_S6_BEGraphes/Maps/toulouse.mapgr";
+        // final String midipyreneesMapName =
+        // "/home/utilisateur/INSA/S6/graphes/INSA_S6_BEGraphes/Maps/toulouse.mapgr";
+
         final String carreMapName = "Maps/carre.mapgr";
         final String insaMapName = "Maps/insa.mapgr";
         final String toulouseMapName = "Maps/toulouse.mapgr";
-        final String midipyreneesMapName = "Maps/toulouse.mapgr";
-        
+        final String hautegaronneMapName = "Maps/haute-garonne.mapgr";
+        final String midipyreneesMapName = "Maps/midi-pyrenees.mapgr";
+        final String franceMapName = "Maps/france.mapgr";
+
         // final String pathName = "/mnt/commetud/3eme Annee
         // MIC/Graphes-et-Algorithmes/Paths/path_fr31insa_rangueil_r2.path";
 
+        int silence = 1;
         // Create a graph reader.
+        System.out.println("\nLoading map...");
         final GraphReader carreGraphReader = new BinaryGraphReader(
                 new DataInputStream(new BufferedInputStream(new FileInputStream(carreMapName))));
-        final Graph carreGraph = carreGraphReader.read();
+        Graph carreGraph = carreGraphReader.read();
         carreGraphReader.close();
+        execTests(carreGraph, 60, "carre", true, true, silence);
+        execTests(carreGraph, 5, "carre", false, true, silence);
+        carreGraph = null;
 
+        System.out.println("Loading map...");
         final GraphReader insaGraphReader = new BinaryGraphReader(
                 new DataInputStream(new BufferedInputStream(new FileInputStream(insaMapName))));
-        final Graph insaGraph = insaGraphReader.read();
+        Graph insaGraph = insaGraphReader.read();
         insaGraphReader.close();
+        execTests(insaGraph, 30, "insa", true, true, silence);
+        execTests(insaGraph, 20, "insa", false, true, silence);
+        insaGraph = null;
 
+        System.out.println("Loading map...");
         final GraphReader toulouseGraphReader = new BinaryGraphReader(
                 new DataInputStream(new BufferedInputStream(new FileInputStream(toulouseMapName))));
-        final Graph toulouseGraph = toulouseGraphReader.read();
+        Graph toulouseGraph = toulouseGraphReader.read();
         toulouseGraphReader.close();
+        execTests(toulouseGraph, 30, "mp", true, true, silence);
+        execTests(toulouseGraph, 100, "mp", true, false, silence);
+        execTests(toulouseGraph, 5, "mp", false, true, silence);
+        execTests(toulouseGraph, 50, "mp", false, false, silence);
+        toulouseGraph = null;
 
+        System.out.println("Loading map...");
+        final GraphReader hautegaronneGraphReader = new BinaryGraphReader(
+                new DataInputStream(new BufferedInputStream(new FileInputStream(hautegaronneMapName))));
+        Graph hautegaronneGraph = hautegaronneGraphReader.read();
+        hautegaronneGraphReader.close();
+        execTests(hautegaronneGraph, 100, "hg", true, false, silence);
+        execTests(hautegaronneGraph, 20, "hg", false, false, silence);
+        hautegaronneGraph = null;
+
+        System.out.println("Loading map...");
         final GraphReader midipyreneesGraphReader = new BinaryGraphReader(
                 new DataInputStream(new BufferedInputStream(new FileInputStream(midipyreneesMapName))));
-        final Graph midipyreneesGraph = midipyreneesGraphReader.read();
+        Graph midipyreneesGraph = midipyreneesGraphReader.read();
         midipyreneesGraphReader.close();
+        execTests(midipyreneesGraph, 50, "mp", true, false, silence);
+        execTests(midipyreneesGraph, 10, "mp", false, false, silence);
+        midipyreneesGraph = null;
+
+        System.out.println("Loading map...");
+        final GraphReader franceGraphReader = new BinaryGraphReader(
+                new DataInputStream(new BufferedInputStream(new FileInputStream(franceMapName))));
+        Graph franceGraph = franceGraphReader.read();
+        franceGraphReader.close();
+        execTests(franceGraph, 30, "fr", true, false, silence);
+        franceGraph = null;
 
         // Create the drawing:
         // final Drawing drawing = createDrawing();
-
-        execTests(insaGraph, 10, "insa", true);
 
         // TODO: Create a PathReader.
         final PathReader pathReader = null;

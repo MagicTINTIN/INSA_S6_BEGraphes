@@ -1,0 +1,3 @@
+feasibleBellman,lengthBellman,timeBellman,solvingTimeBellman,feasibleDijkstra,lengthDijkstra,timeDijkstra,solvingTimeDijkstra,feasibleAStar,lengthAStar,timeAStar,solvingTimeAStar
+1,2291.679,294.5134126281738,11,1,2291.679,294.5134126281738,1,1,2291.679,294.5134126281738,1
+1,716.32495,90.20953884887695,11,1,716.32495,90.20953884887695,0,1,716.32495,90.20953884887695,0
