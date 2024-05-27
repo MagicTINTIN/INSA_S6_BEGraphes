@@ -269,18 +269,6 @@ public class ShortestPathAlgorithmTest {
         Format formatter = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
         String outputResNameFileAll = "globalTestAll" + "_" + formatter.format(new Date()) + ".csv";
         String outputResNameFileDijastar = "globalTestDijastra" + "_" + formatter.format(new Date()) + ".csv";
-        // Visit these directory to see the list of available files on Commetud.
-        // final String mapName = "/mnt/commetud/3eme Annee
-        // MIC/Graphes-et-Algorithmes/Maps/insa.mapgr";
-
-        // final String carreMapName =
-        // "/home/utilisateur/INSA/S6/graphes/INSA_S6_BEGraphes/Maps/carre.mapgr";
-        // final String insaMapName =
-        // "/home/utilisateur/INSA/S6/graphes/INSA_S6_BEGraphes/Maps/insa.mapgr";
-        // final String toulouseMapName =
-        // "/home/utilisateur/INSA/S6/graphes/INSA_S6_BEGraphes/Maps/toulouse.mapgr";
-        // final String midipyreneesMapName =
-        // "/home/utilisateur/INSA/S6/graphes/INSA_S6_BEGraphes/Maps/toulouse.mapgr";
 
         final String carreMapName = "Maps/carre.mapgr";
         final String insaMapName = "Maps/insa.mapgr";
@@ -289,11 +277,7 @@ public class ShortestPathAlgorithmTest {
         final String midipyreneesMapName = "Maps/midi-pyrenees.mapgr";
         final String franceMapName = "Maps/france.mapgr";
 
-        // final String pathName = "/mnt/commetud/3eme Annee
-        // MIC/Graphes-et-Algorithmes/Paths/path_fr31insa_rangueil_r2.path";
-
         int silence = 1;
-        // Create a graph reader.
         System.out.println("\n\nLoading map...");
         final GraphReader carreGraphReader = new BinaryGraphReader(
                 new DataInputStream(new BufferedInputStream(new FileInputStream(carreMapName))));
