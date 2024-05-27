@@ -63,8 +63,11 @@ public class LabelTermas implements Comparable<LabelTermas> {
         }
     }
 
+    public double toleranceCircle(double distance, double radius) {
+        return Math.pow(Math.log(1+Math.pow(distance*10/radius,4)),2);
+    }
     public double distanceToCircleWeight(Node center, Node position, double radius) {
-        return 0 * Math.pow(Math.abs(Point.distance(center.getPoint(), position.getPoint()) - radius), 1.);
+        return 0.3 * Math.pow(Math.abs(toleranceCircle(Point.distance(center.getPoint(), position.getPoint()) - radius, radius)), 1.);
     }
 
     public static double getOrientation(Point o, Point a) {

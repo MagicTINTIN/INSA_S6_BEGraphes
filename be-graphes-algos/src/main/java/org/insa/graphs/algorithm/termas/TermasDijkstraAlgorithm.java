@@ -104,6 +104,7 @@ public class TermasDijkstraAlgorithm extends TermasAlgorithm {
         final int startID = data.getStart().getId();
         TermasSolution solution = null;
 
+        System.out.println("Radius: " + data.getRadius());
         // initialising
         Graph graph = data.getGraph();
         final int nbNodes = graph.size();
